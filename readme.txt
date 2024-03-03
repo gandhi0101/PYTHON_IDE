@@ -1,5 +1,7 @@
 python 3.11.8
 usaremos entornos virtuales para no gernerar problemas con las librerias
+instalar virtualenv
+        pip install virtualenv
 con el siguiente comando creamos el entorno virtuale
         virtualenv -p python env_IDE
 activamos el entorno
