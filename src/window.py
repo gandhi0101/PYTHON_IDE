@@ -1,8 +1,10 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget, QMenu, QAction, QTabWidget
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QTextCursor
 from io import StringIO
 import contextlib
+from LineNumberArea import LineNumberArea
+from CodeEditor import CodeEditor
 
 class PythonIDE(QMainWindow):
 	def __init__(self):
@@ -60,8 +62,9 @@ class PythonIDE(QMainWindow):
 		compilerMenu = menubar.addMenu('Compilar')
 		
 		#entrada de texto a la izquierda
-		self.text_editor = QTextEdit(self)
-		self.text_editor.setGeometry(10, 30, 1100, 520) #tamaño por defeto
+		self.text_editor = CodeEditor(self)
+		self.text_editor.setGeometry(30, 30, 1100, 520) #tamaño por defeto
+		self.setupEditor()
 		# Establecer un texto predeterminado (placeholder)
 		placeholder_text = "Escribe aquí..."
 		self.text_editor.setPlainText(placeholder_text)
@@ -169,6 +172,12 @@ class PythonIDE(QMainWindow):
 		if self.text_editor.toPlainText() == "Escribe aquí...":
             # Limpiar el texto cuando el usuario comienza a escribir
 			self.text_editor.clear()
+   
+	def setupEditor(self):
+		layout = QVBoxLayout(self)
+		layout.addWidget(self.text_editor)
+
+
 
 	def run_code(self):
 		code = self.text_editor.toPlainText()
