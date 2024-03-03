@@ -15,8 +15,15 @@ class CodeEditor(QPlainTextEdit):
     def setupEditor(self):
         layout = QVBoxLayout(self)
         layout.addWidget(self)
+        # Configuración de la barra de desplazamiento
+        scroll_bar = self.verticalScrollBar()
+        scroll_bar.rangeChanged.connect(self.updateLineNumberAreaWidth)
+        scroll_bar.valueChanged.connect(self.updateLineNumberArea)
+
+        
         self.textChanged.connect(self.updateLineNumberArea)
         self.cursorPositionChanged.connect(self.highlightCurrentLine)
+        
 
     def lineNumberAreaWidth(self):
         digits = 1
