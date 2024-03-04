@@ -5,65 +5,28 @@ from io import StringIO
 import contextlib
 from LineNumberArea import LineNumberArea
 from CodeEditor import CodeEditor
+from menu import MenuHandler
 
 class PythonIDE(QMainWindow):
 	def __init__(self):
 		super(PythonIDE, self).__init__()
 
 		self.initUI()
+		self.clipboard = QApplication.clipboard()
+		self.current_file = ''
 
 	def initUI(self):
     
 		self.setGeometry(100, 100, 1600, 810)
 		self.setWindowTitle('IDE Compiler GSA')
+		
+		self.menu_handler = MenuHandler(self)
   
 		menubar = self.menuBar()# Crear la barra de menú
-		fileMenu = menubar.addMenu('File')
-		editMenu = menubar.addMenu('Edit')
-		buldigDegug = menubar.addMenu('Buld and Debug') #falta ver su menu desplegable
-        
-        # Crear acciones para el menú "File"
-		newAct = QAction('New', self)
-		openAct = QAction('Open', self)
-		saveAct = QAction('Save', self)
-        # Agregar acciones al menú "File"
-		fileMenu.addAction(newAct)
-		fileMenu.addAction(openAct)
-		fileMenu.addAction(saveAct)
-        
-        # Crear acciones para el menú "Edit"
-		cutAct = QAction('Cut', self)
-		copyAct = QAction('Copy', self)
-		pasteAct = QAction('Paste', self)
-
-        # Agregar acciones al menú "Edit"
-		editMenu.addAction(cutAct)
-		editMenu.addAction(copyAct)
-		editMenu.addAction(pasteAct)
-  
-		menubar.addSeparator()
-  
-		newfileicon = QAction(QIcon('assets\icons\\nuevo-documento.png'),"     ",self)
-		menubar.addAction(newfileicon)
-		openfileicon = QAction(QIcon('assets\icons\\nuevo-documento.png'),"     ",self)
-		menubar.addAction(openfileicon)
-		savefileicon = QAction(QIcon('assets\icons\\nuevo-documento.png'),"     ",self)
-		menubar.addAction(savefileicon)
-  
-		closeMenu = menubar.addMenu('Close')
-  
-		separatorAction = QAction(self)
-		separatorAction.setSeparator(True)
-		menubar.addAction(separatorAction)
-  
-		lexicoMenu = menubar.addMenu('Lexico')
-		sintacticoMenu = menubar.addMenu('Sintactico')
-		semanticoMenu = menubar.addMenu('Semantico')
-		compilerMenu = menubar.addMenu('Compilar')
 		
 		#entrada de texto a la izquierda
 		self.text_editor = CodeEditor(self)
-		self.text_editor.setGeometry(30, 30, 1100, 520) #tamaño por defeto
+		self.text_editor.setGeometry(30, 30, 1100, 560) #tamaño por defeto
 		self.setupEditor()
 		# Establecer un texto predeterminado (placeholder)
 		placeholder_text = "Escribe aquí..."
@@ -116,10 +79,10 @@ class PythonIDE(QMainWindow):
 		
 		layuotSpecialOutput.addWidget(self.specialOuputTab)
 		#boton provicional de ejecutar
-		self.run_button = QPushButton('Run', self)
-		self.run_button.setGeometry(200, 560, 780, 30)
-		self.run_button.clicked.connect(self.run_code)
-		# Crear el widget de abajo buttom
+		# self.run_button = QPushButton('Run', self)
+		# self.run_button.setGeometry(200, 560, 780, 30)
+		# self.run_button.clicked.connect(self.run_code)
+		# Crear el widget de abajo (buttom)
 		buttom_widget = QWidget(self)
 		buttom_widget.setGeometry(0,580,1600,230)
         # Crear un layout vertical para el widget buttom
@@ -194,6 +157,13 @@ class PythonIDE(QMainWindow):
 		# Seleccionar y mostrar la pestaña de resultados
 		index = self.erros_widget.indexOf(self.results)
 		self.erros_widget.setCurrentIndex(index)
+  
+	def run_lexical(self):
+		print("run lexical")
+	def run_syntax(self):
+		print("run syntax")
+	def run_semantic(self):
+		print("run semantic")
 
 if __name__ == '__main__':
 	app = QApplication(sys.argv)
