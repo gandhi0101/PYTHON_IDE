@@ -90,7 +90,7 @@ class MenuHandler:
             return
 
         # Borrar el contenido del editor
-        self.parent.text_editor.clear()
+        
 
         # Solicitar un nuevo nombre de archivo
         options = QFileDialog.Options()
@@ -105,6 +105,7 @@ class MenuHandler:
             self.parent.current_file = file_name  # Asignar el nombre del archivo guardado
             self.parent.setWindowTitle(file_name +'- IDE Compiler Gandhi Armando Salvador')  # Actualizar el título de la ventana
             self.parent.text_editor.document().setModified(False)  # Marcar como no modificado
+            self.parent.text_editor.clear()
         print("New file action")
         # *guada el archivo
         
@@ -112,6 +113,7 @@ class MenuHandler:
     def open_file(self):
         # Implementar lógica para abrir un archivo
         if not self.confirm_save_changes():
+            
             return
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
@@ -124,6 +126,7 @@ class MenuHandler:
             self.parent.current_file = file_name  # Asignar el nombre del archivo guardado
             self.parent.setWindowTitle(file_name +'- IDE Compiler Gandhi Armando Salvador')  # Actualizar el título de la ventana
             self.parent.text_editor.document().setModified(False)  # Marcar como no modificado
+
         print("Open file action")
 
     def saveAs_file(self):
@@ -192,6 +195,8 @@ class MenuHandler:
         if not self.confirm_save_changes():
             return
         self.parent.text_editor.clear()
+        self.parent.current_file = ""
+        self.parent.setWindowTitle('- IDE Compiler Gandhi Armando Salvador')
         print("Closing menu")
         
     def confirm_save_changes(self):
@@ -204,6 +209,7 @@ class MenuHandler:
                 if reply == QMessageBox.Yes:
                     return self.save_as_file()
                 elif reply == QMessageBox.Cancel:
+                    
                     return False  # Cancelar la acción si el usuario elige cancelar
             else:
                 reply = QMessageBox.question(self.parent, 'Guardar Cambios', f'¿Quieres guardar los cambios en {self.parent.current_file}?',
