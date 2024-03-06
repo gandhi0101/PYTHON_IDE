@@ -3,23 +3,30 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, Q
 from PyQt5.QtGui import QIcon, QTextCursor
 from io import StringIO
 import contextlib
+import os
 from LineNumberArea import LineNumberArea
 from CodeEditor import CodeEditor
 from menu import MenuHandler
+from LineColumnInfoWidget import LineColumnInfoWidget
 
 class PythonIDE(QMainWindow):
 	def __init__(self):
 		super(PythonIDE, self).__init__()
 
 		self.initUI()
+		
 		self.clipboard = QApplication.clipboard()
 		self.current_file = ''
+
 
 	def initUI(self):
     
 		self.setGeometry(100, 100, 1600, 810)
-		self.setWindowTitle('IDE Compiler GSA')
+		self.setWindowTitle('IDE Compiler Gandhi Armando Salvador')
+		self.setWindowIcon(QIcon(os.path.join('src','assets', 'icons', 'principal.png')))
 		
+  		#self.statusBar().addPermanentWidget(self.line_column_widget)
+  
 		self.menu_handler = MenuHandler(self)
   
 		menubar = self.menuBar()# Crear la barra de menú
@@ -129,6 +136,10 @@ class PythonIDE(QMainWindow):
 
         # Agregar el QTabWidget al layout principal
 		layoutErros.addWidget(self.erros_widget)
+		self.line_column_widget = LineColumnInfoWidget(self)
+		self.line_column_widget.move(20, self.height() - self.line_column_widget.height()-2 )
+		self.text_editor.cursorPositionChanged.connect(self.update_line_column_info)
+
   
 	def handleTextChanged(self):
         # Verificar si el texto actual es igual al placeholder
@@ -164,6 +175,13 @@ class PythonIDE(QMainWindow):
 		print("run syntax")
 	def run_semantic(self):
 		print("run semantic")
+	def update_line_column_info(self):
+		current_line = self.text_editor.textCursor().blockNumber() + 1
+		current_column = self.text_editor.textCursor().positionInBlock() + 1
+
+	    # Actualiza la información en el widget
+		self.line_column_widget.update_info(current_line, current_column)
+
 
 if __name__ == '__main__':
 	app = QApplication(sys.argv)

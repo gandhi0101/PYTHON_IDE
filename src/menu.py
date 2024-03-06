@@ -103,7 +103,7 @@ class MenuHandler:
                 file.write(self.parent.text_editor.toPlainText())
             
             self.parent.current_file = file_name  # Asignar el nombre del archivo guardado
-            self.parent.setWindowTitle(file_name +'- IDE Compiler GSA')  # Actualizar el título de la ventana
+            self.parent.setWindowTitle(file_name +'- IDE Compiler Gandhi Armando Salvador')  # Actualizar el título de la ventana
             self.parent.text_editor.document().setModified(False)  # Marcar como no modificado
         print("New file action")
         # *guada el archivo
@@ -122,7 +122,7 @@ class MenuHandler:
                 content = file.read()
                 self.parent.text_editor.setPlainText(content)
             self.parent.current_file = file_name  # Asignar el nombre del archivo guardado
-            self.parent.setWindowTitle(file_name +'- IDE Compiler GSA')  # Actualizar el título de la ventana
+            self.parent.setWindowTitle(file_name +'- IDE Compiler Gandhi Armando Salvador')  # Actualizar el título de la ventana
             self.parent.text_editor.document().setModified(False)  # Marcar como no modificado
         print("Open file action")
 
@@ -137,7 +137,7 @@ class MenuHandler:
             with open(file_name, 'w') as file:
                 file.write(self.parent.text_editor.toPlainText())
             self.parent.current_file = file_name  # Asignar el nombre del archivo guardado
-            self.parent.setWindowTitle(file_name +'- IDE Compiler GSA')  # Actualizar el título de la ventana
+            self.parent.setWindowTitle(file_name +'- IDE Compiler Gandhi Armando Salvador')  # Actualizar el título de la ventana
             self.parent.text_editor.document().setModified(False)  # Marcar como no modificado
             return True
         #print("Save file action")

@@ -92,3 +92,11 @@ class CodeEditor(QPlainTextEdit):
             top = bottom
             bottom = top + self.blockBoundingRect(block).height()
             blockNumber += 1
+    def current_line_number(self):
+        cursor = self.textCursor()
+        return cursor.blockNumber() + 1
+
+    def current_column_number(self):
+        cursor = self.textCursor()
+        return cursor.columnNumber() + 1
+    
