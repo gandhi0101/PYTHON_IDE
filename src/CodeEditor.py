@@ -1,6 +1,9 @@
 from PyQt5.QtWidgets import QPlainTextEdit, QVBoxLayout, QTextEdit
 from PyQt5.QtGui import QTextCursor, QTextFormat, QPainter
 from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtWidgets import QScrollBar
+from PyQt5.QtGui import QTextOption
+
 from LineNumberArea import LineNumberArea
 
 
@@ -15,15 +18,25 @@ class CodeEditor(QPlainTextEdit):
     def setupEditor(self):
         layout = QVBoxLayout(self)
         layout.addWidget(self)
-        # Configuración de la barra de desplazamiento
+        # Desactivar la envoltura de texto
+        self.setWordWrapMode(QTextOption.NoWrap)
         scroll_bar = self.verticalScrollBar()
         scroll_bar.rangeChanged.connect(self.updateLineNumberAreaWidth)
         scroll_bar.valueChanged.connect(self.updateLineNumberArea)
 
-        
+        # Configuración de la barra de desplazamiento horizontal
+        h_scrollbar = QScrollBar(Qt.Horizontal, self)
+        layout.addWidget(h_scrollbar)
+
+        # Establecer la barra de desplazamiento horizontal
+        self.setHorizontalScrollBar(h_scrollbar)
+
+        # Conectar las señales relevantes
+        h_scrollbar.valueChanged.connect(self.updateLineNumberAreaWidth)
+        h_scrollbar.rangeChanged.connect(self.updateLineNumberArea)
+
         self.textChanged.connect(self.updateLineNumberArea)
         self.cursorPositionChanged.connect(self.highlightCurrentLine)
-        
 
     def lineNumberAreaWidth(self):
         digits = 1
@@ -46,11 +59,20 @@ class CodeEditor(QPlainTextEdit):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        cr = self.contentsRect()
-        self.lineNumberArea.setGeometry(
-            QRect(cr.left(), cr.top(), self.lineNumberAreaWidth(), cr.height())
-        )
-        self.updateLineNumberAreaWidth()
+
+        cursor = QTextCursor(self.document())
+        cursor.movePosition(QTextCursor.End, QTextCursor.MoveAnchor)
+        bottom_right = self.cursorRect(cursor).bottomRight()
+
+        # Ajusta el ancho del CodeEditor al contenido más ancho
+        self.setMinimumWidth(bottom_right.x() + self.lineNumberAreaWidth() + 5)
+
+        # Ajusta la geometría de la barra de desplazamiento horizontal
+        self.horizontalScrollBar().setGeometry(self.contentsRect().left(), self.contentsRect().bottom(), self.contentsRect().width(), 20)
+
+        # Ajusta la geometría del área de texto
+        self.lineNumberArea.setGeometry(QRect(self.contentsRect().left(), self.contentsRect().top(), self.lineNumberAreaWidth(), self.contentsRect().height()))
+
 
     def highlightCurrentLine(self):
         extraSelections = []

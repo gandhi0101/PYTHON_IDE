@@ -206,7 +206,7 @@ class MenuHandler:
                 elif reply == QMessageBox.Cancel:
                     return False  # Cancelar la acción si el usuario elige cancelar
             else:
-                reply = QMessageBox.question(self.parent, 'Guardar Cambios', f'¿Quieres guardar los cambios en {self.current_file}?',
+                reply = QMessageBox.question(self.parent, 'Guardar Cambios', f'¿Quieres guardar los cambios en {self.parent.current_file}?',
                                              QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
 
                 if reply == QMessageBox.Yes:
