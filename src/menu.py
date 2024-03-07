@@ -118,15 +118,16 @@ class MenuHandler:
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
         file_name, _ = QFileDialog.getOpenFileName(self.parent, "Open File", os.path.expanduser("~"), "All Files (*);;Python Files (*.py)", options=options)
-
+        self.parent.text_editor.clear()
         if file_name:
             with open(file_name, 'r') as file:
                 content = file.read()
                 self.parent.text_editor.setPlainText(content)
+            
             self.parent.current_file = file_name  # Asignar el nombre del archivo guardado
             self.parent.setWindowTitle(file_name +'- IDE Compiler Gandhi Armando Salvador')  # Actualizar el título de la ventana
             self.parent.text_editor.document().setModified(False)  # Marcar como no modificado
-
+         
         print("Open file action")
 
     def saveAs_file(self):

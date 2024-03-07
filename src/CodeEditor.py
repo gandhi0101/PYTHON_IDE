@@ -68,7 +68,7 @@ class CodeEditor(QPlainTextEdit):
         self.setMinimumWidth(bottom_right.x() + self.lineNumberAreaWidth() + 5)
 
         # Ajusta la geometría de la barra de desplazamiento horizontal
-        self.horizontalScrollBar().setGeometry(self.contentsRect().left(), self.contentsRect().bottom(), self.contentsRect().width(), 20)
+        #self.horizontalScrollBar().setGeometry(self.contentsRect().left(), self.contentsRect().bottom(), self.contentsRect().width(), 2)
 
         # Ajusta la geometría del área de texto
         self.lineNumberArea.setGeometry(QRect(self.contentsRect().left(), self.contentsRect().top(), self.lineNumberAreaWidth(), self.contentsRect().height()))
