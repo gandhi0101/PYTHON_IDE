@@ -1,9 +1,11 @@
 import sys
+from Lexical import LexicalScanner
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget, QMenu, QAction, QTabWidget
 from PyQt5.QtGui import QIcon, QTextCursor
 from io import StringIO
 import contextlib
 import os
+
 from LineNumberArea import LineNumberArea
 from CodeEditor import CodeEditor
 from menu import MenuHandler
@@ -170,7 +172,21 @@ class PythonIDE(QMainWindow):
 		self.erros_widget.setCurrentIndex(index)
   
 	def run_lexical(self):
-		print("run lexical")
+     # Borrar contenido anterior
+		self.text_lexicalOutput.clear()
+		self.text_lexicalErrors.clear()
+		if(self.current_file==''):
+			self.menu_handler.confirm_save_changes()
+		else:
+			lexicalscanner = LexicalScanner(self)
+			lexicalscanner.lexico()
+
+	# def output_lexical(self,out):
+		
+	# 	self.text_lexicalOutput.setPlainText(out)
+	# 	index = self.erros_widget.indexOf(self.lexicalOutput)
+	# 	self.erros_widget.setCurrentIndex(index)
+	# 	print("run lexical")
 	def run_syntax(self):
 		print("run syntax")
 	def run_semantic(self):

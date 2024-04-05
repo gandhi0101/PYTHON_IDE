@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QApplication, QFileDialog,QMessageBox, QAction, QMen
 from PyQt5.QtGui import QIcon
 import os
 
+
 class MenuHandler:
     def __init__(self, parent):
         self.parent = parent
