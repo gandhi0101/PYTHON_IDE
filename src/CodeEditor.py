@@ -155,40 +155,45 @@ class CodeEditor(QPlainTextEdit):
         }
         # Definición de patrones para cada token y su color correspondiente
         patterns = [
-            (r"\b(\d+(\.\d+)?)\b", "color1"),  # Números enteros y reales
-            (r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", "color2"),  # Identificadores
-            (
-                r"(/\*.*?\*/|//.*)",
-                "color3",
-            ),  # Comentarios de una línea y de múltiples líneas
-            (
-                r"\b(if|else|do|while|switch|case|integer|double|main|cin|cout)\b",
-                "color4",
-            ),  # Palabras reservadas
-            (
-                r"(\+|\-|\*|\/|%|\^|\+\+|\-\-|=)",
-                "color5",
-            ),  # Operadores aritméticos y de asignación
-            (r"(<=|>=|!=|==|<|>)", "color6"),  # Operadores relacionales
-            (r"(and|or)", "color7"),  # Operadores lógicos
-            (r"(\(|\)|\{|\}|\,|\;)", "color8"),  # Símbolos
+            (r"\b(\d+(\.\d+)?)\b", "color1", ),  # Números enteros y reales
+            (r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", "color2",),  # Identificadores
+            (r"(\+|\-|\*|\/|%|\^|\+\+|\-\-|=)","color5",),  # Operadores aritméticos y de asignación
+            (r"(<=|>=|!=|==|<|>)", "color6", ),  # Operadores relacionales
+            (r"(and|or)", "color7", ),  # Operadores lógicos
+            (r"\b(for|if|else|do|while|switch|case|integer|double|main|cin|cout)\b","color4",),  # Palabras reservadas
+            (r"(\(|\)|\{|\}|\,|\;)", "color8", ),  # Símbolos
+            (r"\/\*(.*?)\*/","color3", re.DOTALL),  # Comentario de múltiples líneas
+            (r"(//.*)", "color3", )  # Coment de una línea 
         ]
 
         # Aplicar patrones y colores al texto
         # Aplicar formato de texto a cada token
-        for pattern, color in patterns:
+        for pattern, color, *modifiers in patterns:
             format = QTextCharFormat()
             format.setForeground(color_palette[color])
-            regex = re.compile(pattern)
+            regex = re.compile(pattern, *modifiers)
+            
             matches = regex.finditer(text)
             for match in matches:
-                cursor.setPosition(match.start())
-                cursor.movePosition(
-                    QTextCursor.EndOfWord,
-                    QTextCursor.KeepAnchor,
-                    match.end() - match.start(),
-                )
-                cursor.setCharFormat(format)
+                start, end = match.span()
+                if color == "color3":  # Si es un comentario de múltiples líneas
+                    # Aplicar formato solo al comentario
+                    cursor.setPosition(start)
+                    cursor.movePosition(
+                        QTextCursor.Right,
+                        QTextCursor.KeepAnchor,
+                        end - start,
+                    )
+                    cursor.setCharFormat(format)
+                else:
+                    # Aplicar formato a todos los matches
+                    cursor.setPosition(start)
+                    cursor.movePosition(
+                        QTextCursor.Right,
+                        QTextCursor.KeepAnchor,
+                        end - start,
+                    )
+                    cursor.setCharFormat(format)
         # Volver a conectar la señal textChanged
         self.textChanged.connect(self.highlightSyntax)
         # Emitir la señal custom para indicar que el texto ha cambiado (útil para otras actualizaciones)
