@@ -1,0 +1,28 @@
+from enum import Enum
+# Enum para representar los tipos de nodos
+class NodeType(Enum):
+    MainRoot = "MainRoot"
+    IntStatement = "IntStatement"
+    DoubleStatement = "DoubleStatement"
+    Statement = "Statement"
+    Expression = "Expression"
+    Term = "Term"
+    Factor = "Factor"
+    Assignment = "Assignment"
+    IfStatement = "IfStatement"
+    ElseStatement = "ElseStatement"
+    WhileStatement = "WhileStatement"
+    WriteStatement = "WriteStatement"
+    ReadStatement = "ReadStatement"
+    DoWhileStatement = "DoWhileStatement"
+    RepeatUntilStatement = "RepeatUntilStatement"
+    SwitchStatement = "SwitchStatement"
+    CaseStatement = "CaseStatement"
+    MainFunction = "MainFunction"
+    ReturnStatement = "ReturnStatement"
+    CinStatement = "CinStatement"
+    CoutStatement = "CoutStatement"
+    Increment = "Increment"
+    Decrement = "Decrement"
+    Error = "Error"
+
