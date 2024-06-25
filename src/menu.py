@@ -209,7 +209,7 @@ class MenuHandler:
                                              QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
 
                 if reply == QMessageBox.Yes:
-                    return self.save_as_file()
+                    return self.saveAs_file()
                 elif reply == QMessageBox.Cancel:
                     
                     return False  # Cancelar la acción si el usuario elige cancelar

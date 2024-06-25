@@ -1,14 +1,14 @@
 import sys
-from Lexical import LexicalScanner
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget, QMenu, QAction, QTabWidget
+from lexer import LexicalScaner
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget, QMenu, QAction, QTabWidget ,QFileDialog
 from PyQt5.QtGui import QIcon, QTextCursor
 from io import StringIO
 import contextlib
 import os
-
+from sint import Syntax
 from LineNumberArea import LineNumberArea
 from CodeEditor import CodeEditor
-from menu import MenuHandler
+from menu import MenuHandler	
 from LineColumnInfoWidget import LineColumnInfoWidget
 
 class PythonIDE(QMainWindow):
@@ -23,7 +23,7 @@ class PythonIDE(QMainWindow):
 
 	def initUI(self):
     
-		self.setGeometry(100, 100, 1600, 810)
+		self.setGeometry(100, 100, 1750, 910)
 		self.setWindowTitle('IDE Compiler Gandhi Armando Salvador')
 		self.setWindowIcon(QIcon(os.path.join('src','assets', 'icons', 'principal.png')))
 		
@@ -46,7 +46,7 @@ class PythonIDE(QMainWindow):
 
 		# "terminal" de salida a la derecha
 		specialOutput_widget = QWidget(self)
-		specialOutput_widget.setGeometry(1100, 15, 500, 600)
+		specialOutput_widget.setGeometry(1100, 15, 650, 600)
 
 		layuotSpecialOutput = QVBoxLayout(specialOutput_widget)
 
@@ -91,9 +91,11 @@ class PythonIDE(QMainWindow):
 		# self.run_button = QPushButton('Run', self)
 		# self.run_button.setGeometry(200, 560, 780, 30)
 		# self.run_button.clicked.connect(self.run_code)
+
+
 		# Crear el widget de abajo (buttom)
 		buttom_widget = QWidget(self)
-		buttom_widget.setGeometry(0,580,1600,230)
+		buttom_widget.setGeometry(0,580,1750,330)
         # Crear un layout vertical para el widget buttom
 		layoutErros = QVBoxLayout(buttom_widget)
 
@@ -178,17 +180,50 @@ class PythonIDE(QMainWindow):
 		if(self.current_file==''):
 			self.menu_handler.confirm_save_changes()
 		else:
-			lexicalscanner = LexicalScanner(self)
-			lexicalscanner.lexico()
+			
+			lexicalscanner = LexicalScaner()
+			lexicalscanner.Lexico(self.current_file)
+			file = open("src/assets/lexico.txt", "r")
+			self.output_lexical(  file.read())
+			file_error = open("src/assets/errors.txt", "r")
+			self.output_lexical_error(  file_error.read())
 
-	# def output_lexical(self,out):
-		
-	# 	self.text_lexicalOutput.setPlainText(out)
-	# 	index = self.erros_widget.indexOf(self.lexicalOutput)
-	# 	self.erros_widget.setCurrentIndex(index)
-	# 	print("run lexical")
+
+	def output_lexical(self,out):
+		self.text_lexicalOutput.setPlainText(out)
+		index = self.erros_widget.indexOf(self.lexicalOutput)
+		self.erros_widget.setCurrentIndex(index)
+
+	def output_lexical_error(self, out):
+		self.text_lexicalErrors.setPlainText(out)
+		index = self.erros_widget.indexOf(self.lexicalErrors)
+		self.erros_widget.setCurrentIndex(index)
+	
+	
 	def run_syntax(self):
+		self.text_syntaxOutput.clear()
+		self.text_syntaxErrors.clear()
+		
+		sintax = Syntax()
+		sintax.sintaxis("src/assets/lexico.txt")
+
+		file = open("src/assets/arbolSintactico.txt", "r")
+		self.output_syntax(  file.read())
+		file_error = open("src/assets/erroresSintactico.txt", "r")
+		self.output_syntax_error(  file_error.read())
+
 		print("run syntax")
+
+	def output_syntax(self, out):
+		self.text_syntaxOutput.setPlainText(out)
+		index = self.erros_widget.indexOf(self.syntaxOutput)
+		self.erros_widget.setCurrentIndex(index)
+
+	def output_syntax_error(self, out):
+		self.text_syntaxErrors.setPlainText(out)
+		index = self.erros_widget.indexOf(self.syntaxErrors)
+		self.erros_widget.setCurrentIndex(index)
+	
 	def run_semantic(self):
 		print("run semantic")
 	def update_line_column_info(self):

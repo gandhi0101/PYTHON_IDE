@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, QRect, pyqtSignal
 from PyQt5.QtWidgets import QScrollBar
 from PyQt5.QtGui import QTextOption, QTextCharFormat, QColor, QFont
 import re
-import Lexical
+import lexer
 from LineNumberArea import LineNumberArea
 
 
