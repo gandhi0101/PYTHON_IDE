@@ -1,6 +1,6 @@
 import sys
 from lexer import LexicalScaner
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget, QMenu, QAction, QTabWidget ,QFileDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget, QMenu, QAction, QTabWidget ,QFileDialog,QTreeView
 from PyQt5.QtGui import QIcon, QTextCursor
 from io import StringIO
 import contextlib
@@ -10,6 +10,7 @@ from LineNumberArea import LineNumberArea
 from CodeEditor import CodeEditor
 from menu import MenuHandler	
 from LineColumnInfoWidget import LineColumnInfoWidget
+from TreeViewSyntax import TreeViewSyntax
 
 class PythonIDE(QMainWindow):
 	def __init__(self):
@@ -66,8 +67,11 @@ class PythonIDE(QMainWindow):
 
 		self.text_lexicalOutput = QTextEdit(self)
 		self.text_lexicalOutput.setReadOnly(True)
-		self.text_syntaxOutput = QTextEdit(self)
-		self.text_syntaxOutput.setReadOnly(True)
+
+		self.text_syntaxOutput = QTreeView()
+		# self.text_syntaxOutput = QTextEdit(self)
+		# self.text_syntaxOutput.setReadOnly(True)
+
 		self.text_semanticOutput = QTextEdit(self)
 		self.text_semanticOutput.setReadOnly(True)
 		self.text_hashTabOutput = QTextEdit(self)
@@ -93,7 +97,7 @@ class PythonIDE(QMainWindow):
 		# self.run_button.clicked.connect(self.run_code)
 
 
-		# Crear el widget de abajo (buttom)
+		# Crear el widget de abajo del editor (buttom)
 		buttom_widget = QWidget(self)
 		buttom_widget.setGeometry(0,580,1750,330)
         # Crear un layout vertical para el widget buttom
@@ -205,7 +209,7 @@ class PythonIDE(QMainWindow):
 	
 	
 	def run_syntax(self):
-		self.text_syntaxOutput.clear()
+		# Limpia el contenido del QTreeView
 		self.text_syntaxErrors.clear()
 			
 		sintax = Syntax()
@@ -213,7 +217,7 @@ class PythonIDE(QMainWindow):
 		#sintax.clearfiles(self)
 
 		file = open("src/assets/arbolSintactico.txt", "r")
-		self.output_syntax(  file.read())
+		self.output_syntax()
 		file.close()
 		file_error = open("src/assets/erroresSintactico.txt", "r")
 		self.output_syntax_error(  file_error.read())
@@ -221,8 +225,11 @@ class PythonIDE(QMainWindow):
 
 		print("run syntax")
 
-	def output_syntax(self, out):
-		self.text_syntaxOutput.setPlainText(out)
+	def output_syntax(self ):
+		tree_view_syntax = TreeViewSyntax("src/assets/arbolSintactico.txt") 
+		self.text_syntaxOutput.setModel(tree_view_syntax.model)
+
+		self.text_syntaxOutput.expandAll()
 		index = self.erros_widget.indexOf(self.syntaxOutput)
 		self.erros_widget.setCurrentIndex(index)
 
