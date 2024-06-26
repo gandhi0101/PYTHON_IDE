@@ -177,16 +177,20 @@ class PythonIDE(QMainWindow):
      # Borrar contenido anterior
 		self.text_lexicalOutput.clear()
 		self.text_lexicalErrors.clear()
+		
 		if(self.current_file==''):
 			self.menu_handler.confirm_save_changes()
 		else:
 			
-			lexicalscanner = LexicalScaner()
-			lexicalscanner.Lexico(self.current_file)
-			file = open("src/assets/lexico.txt", "r")
-			self.output_lexical(  file.read())
-			file_error = open("src/assets/errors.txt", "r")
-			self.output_lexical_error(  file_error.read())
+			LexicalScaner().Lexico(self.current_file)
+			#lexicalscanner.clearfiles()
+
+			with open("src/assets/lexico.txt", "r") as file:
+				self.output_lexical(  file.read())
+				file.close()
+			with open("src/assets/errors.txt", "r") as file_error:
+				self.output_lexical_error(  file_error.read())
+				file_error.close()
 
 
 	def output_lexical(self,out):
@@ -203,14 +207,17 @@ class PythonIDE(QMainWindow):
 	def run_syntax(self):
 		self.text_syntaxOutput.clear()
 		self.text_syntaxErrors.clear()
-		
+			
 		sintax = Syntax()
 		sintax.sintaxis("src/assets/lexico.txt")
+		#sintax.clearfiles(self)
 
 		file = open("src/assets/arbolSintactico.txt", "r")
 		self.output_syntax(  file.read())
+		file.close()
 		file_error = open("src/assets/erroresSintactico.txt", "r")
 		self.output_syntax_error(  file_error.read())
+		file_error.close()
 
 		print("run syntax")
 

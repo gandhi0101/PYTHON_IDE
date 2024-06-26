@@ -13,7 +13,6 @@ class Node:
     def add_child(self, node):
         self.children.append(node)
 
-
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -40,7 +39,7 @@ class Parser:
                 else "fin de entrada"
             )
             self.errors.append(
-                f"Se esperaba {expected_token}, se encontró {found_token}"
+                f"Se esperaba {expected_token}, se encontro {found_token}"
             )
             self.advance()
 
@@ -77,9 +76,9 @@ class Parser:
     def do_while_stmt(self):
         root = Node("SentenciaDo")
         self.match("do")
-        root.add_child(self.stmt())  # Agregar la primera expresión dentro del do-while
+        root.add_child(self.stmt())  # Agregar la primera expresion dentro del do-while
         while self.current_token and self.current_token.token_type != "until":
-            root.add_child(self.stmt())  # Agregar más expresiones dentro del do-while
+            root.add_child(self.stmt())  # Agregar mas expresiones dentro del do-while
         self.match("until")
         self.match("(")
         root.add_child(self.expr())
@@ -88,28 +87,29 @@ class Parser:
         return root
 
     def stmt(self):
+        
         if self.current_token and self.current_token.token_type == "int":
-            root = Node("DeclaraciónInt")
-            self.match("int")
-            root.add_child(self.idList())
-            self.match(";")
+            #root = Node("DeclaracionInt")
+            #self.match("int")
+            root = self.idListInt()
+            #self.match(";")
         elif self.current_token and self.current_token.token_type == "do":
             root = self.do_while_stmt()
         elif self.current_token and self.current_token.token_type == "float":
-            root = Node("DeclaraciónFloat")
-            self.match("float")
-            root.add_child(self.idList())
-            self.match(";")
+            #root = Node("DeclaracionFloat")
+            #self.match("float")
+            root = self.idListFloat()
+           # self.match(";")
         elif self.current_token and self.current_token.token_type == "id":
-            root = Node("Asignación")
+            root = Node("Asignacion")
             id_node = Node(self.current_token.value)
             self.match("id")
             root.add_child(id_node)
             if self.current_token and self.current_token.token_type in ["++", "--"]:
                 op_node = None
                 if(self.current_token.token_type =="++"):
-                    op_node = Node("+")
-                else:     op_node = Node("-")
+                    op_node = Node("++")
+                else:     op_node = Node("--")
                 op_node.add_child(id_node)
                 self.match(self.current_token.token_type)
                 op_node.add_child(Node("1"))
@@ -192,8 +192,40 @@ class Parser:
             root = Node("Error")
             error_token = self.current_token.value if self.current_token else None
             if error_token:
-                self.errors.append(f"Sentencia inválida: {error_token}")
+                self.errors.append(f"Sentencia invalida: {error_token}")
             self.advance()
+        return root
+    
+    def idListInt(self):
+        root = Node("DeclaracionInt")
+        self.advance()
+        while self.current_token  and  self.current_token.value !=";":
+            #self.match("id")
+            id_node = Node(self.current_token.value)
+            root.add_child(id_node)
+            self.advance()
+            if self.current_token and self.current_token.value == ",":
+                self.advance()
+            else:
+                self.advance()
+                break
+       
+        return root
+    
+    def idListFloat(self):
+        root = Node("DeclaracionFloat")
+        self.advance()
+        while self.current_token  and  self.current_token.value !=";":
+            #self.match("id")
+            id_node = Node(self.current_token.value)
+            root.add_child(id_node)
+            self.advance()
+            if self.current_token and self.current_token.value == ",":
+                self.advance()
+            else:
+                self.advance()
+                break
+       
         return root
     
     def idList(self):
@@ -201,13 +233,14 @@ class Parser:
         id_node = Node(self.current_token.value)
         root.add_child(id_node)
         self.match("id")
-        while self.current_token and  self.current_token.value ==","  and  self.current_token.value !=";":
-            self.match(",")
+        while self.current_token and  self.current_token.value =="+"  and  self.current_token.value !=";":
+            self.match("+")
             id_node = Node(self.current_token.value)
             root.add_child(id_node)
             self.match("id")
             
-        return root
+        return root       
+      
     def expr(self):
         root = self.term()
         while self.current_token and self.current_token.token_type in ["+", "-"]:
@@ -239,6 +272,8 @@ class Parser:
             ">=",
             "==",
             "!=",
+            "&&",
+            "||"
         ]:
             op_node = Node(self.current_token.value)
             self.match(self.current_token.token_type)
@@ -259,11 +294,12 @@ class Parser:
         else:
             root = Node("Error")
             error_token = self.current_token.value if self.current_token else None
-            self.errors.append(f"Factor inválido: {error_token}")
+            self.errors.append(f"Factor invalido: {error_token}")
             self.advance()
         
         return root
     
+
     def relational_expr(self):
         root = self.term()
         if self.current_token and self.current_token.token_type in [
@@ -283,76 +319,78 @@ class Parser:
                 self.match(self.current_token.token_type)
         return root
 
+    
+
     def parse(self):
         ast = self.program()
 
         if self.errors:
-            print("Se encontraron errores de sintaxis. La compilación ha fallado.")
+            print("Se encontraron errores de sintaxis. La compilacion ha fallado.")
         else:
-            print("La sintaxis es correcta. La compilación ha sido exitosa.")
+            print("La sintaxis es correcta. La compilacion ha sido exitosa.")
 
         return ast
 
 class Syntax:
-    
     def __init__(self):
-        print("")
-    def sintaxis(self,ruta):#"src/assets/lexico.txt"
+        print("\n\n")
+
+    def sintaxis(self, ruta):  # "src/assets/lexico.txt"
         with open(ruta, "r") as file:
-            self.lines = file.readlines()
+            lines = file.readlines()
+            file.close()
 
         # Crear la lista de objetos Token
         token_list = []
-        for line in self.lines:
+        for line in lines:
             line = line.strip()
             if line:
                 token_parts = line.split("--*")
                 if token_parts[1].strip() == "identificador":
                     token_type = "id"
                     value = token_parts[0].strip()
+
                 elif token_parts[1].strip() == "flotante":
                     token_type = "num"
                     value = token_parts[0].strip()
+
                 elif token_parts[1].strip() == "entero":
                     token_type = "num"
                     value = token_parts[0].strip()
+
                 else:
                     token_type = token_parts[0].strip()
                     value = token_parts[0].strip()
+
                 token = Token(token_type, value)
                 token_list.append(token)
-        # # Imprimir la lista de objetos Token
-        # for tok in token_list:
-        #    print (tok.token_type, tok.value)
-
 
         parser = Parser(token_list)
         ast = parser.parse()
 
-
         # Imprimir errores
-
-        f = open("src/assets/erroresSintactico.txt", "w", encoding="utf-8")
-        if parser.errors:
-            print("Errores de sintaxis:")
-            # f.write("Errores de sintaxis:")
-            for error in parser.errors:
-                f.write(error+"\n")
-                print(error)
-        f.close()
+        with open("src/assets/erroresSintactico.txt", "w", encoding="utf-8") as f:
+            if parser.errors:
+                print("Errores de sintaxis:")
+                for error in parser.errors:
+                    f.write(error + "\n")
+                    print(error)
+            f.close()
 
         # Imprimir AST
-        f = open("src/assets/arbolSintactico.txt", "w", encoding="utf-8")
-        print("Arbol de Sintactico:")
-        f.write("Arbol Sintactico")
-        def print_ast(node, level=0, is_last_child=False):
-            indent = " | " * level
-        # child_prefix = " -- " if is_last_child else "| -- "
-            print(f"{indent}{node.value}")
-            f.write(f"\n{indent}{node.value}")
-            for i, child in enumerate(node.children):
-                is_last = i == len(node.children) - 1
-                print_ast(child, level + 1, is_last)
+        with open("src/assets/arbolSintactico.txt", "w", encoding="utf-8") as f:
+            print("Arbol Sintactico:")
+            f.write("Arbol Sintactico\n")
 
-        print_ast(ast)
-        f.close()
+            def print_ast(node, level=0, is_last_child=False):
+                indent = " | " * level
+                print(f"{indent}{node.value}")
+                if node.value != "Error":
+                    f.write(f"{indent}{node.value}\n")
+                for i, child in enumerate(node.children):
+                    is_last = i == len(node.children) - 1
+                    print_ast(child, level + 1, is_last)
+
+            print_ast(ast)
+
+            f.close()

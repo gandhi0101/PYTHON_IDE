@@ -1,9 +1,19 @@
 from optparse import OptionParser
 
-
 class LexicalScaner:
     def __init__(self):
         print("")
+
+    parser = OptionParser(version="%prog 1.0.3")
+    parser.add_option(
+        "-f",
+        "--*file",
+        action="store",
+        dest="file",
+        default="test.txt",
+        type="string",
+        help="",
+    )
 
     # Diccionarios de tokens
     palabras_reservadas = {
@@ -49,21 +59,30 @@ class LexicalScaner:
         "<=": "MENOR_IGUAL_QUE",
         ">=": "MAYOR_IGUAL_QUE",
     }
-    operadores_logicos = {"&&": "AND", "||": "OR", "!": "NOT"}
-    operadores_dobles = {"++": "INCREMENTO", "--": "DECREMENTO"}
-    tokens = []
-    errors = []
+    operadores_logicos = {"&&": "AND", 
+                        "||": "OR", 
+                        "!": "NOT"
+    }
+    operadores_dobles = {"++": "INCREMENTO",
+                        "--": "DECREMENTO"
+    }
+    
     linea = 1
     col = 1
 
+    
+
     def Lexico(self,ruta):
-        self.file = open(ruta, "r")
-        contenidodecodigo = self.file.read()
         i = 0
-        while i < len(contenidodecodigo):
+        tokens = []
+        errors = []
+        with open(ruta, "r") as file:
+            self.contenidodecodigo = file.read()
+            file.close()
+        while i < len(self.contenidodecodigo):
             # Ignorar espacios en blanco
-            if contenidodecodigo[i].isspace():
-                if contenidodecodigo[i] == "\n":
+            if self.contenidodecodigo[i].isspace():
+                if self.contenidodecodigo[i] == "\n":
                     self.linea += 1
                     self.col = 1
                 else:
@@ -71,78 +90,87 @@ class LexicalScaner:
                 i += 1
                 continue
             # Identificar comentarios de una línea
-            if contenidodecodigo[i : i + 2] == "//":
-                i = contenidodecodigo.index("\n", i)
+            if self.contenidodecodigo[i : i + 2] == "//":
+                i = self.contenidodecodigo.index("\n", i)
                 continue
             # Identificar comentarios multilinea
-            if contenidodecodigo[i : i + 2] == "/*":
-                aux = contenidodecodigo.index("*/", i) + 2
+            if self.contenidodecodigo[i : i + 2] == "/*":
+                aux = self.contenidodecodigo.index("*/", i) + 2
                 j = i
                 while j < aux:
-                    if contenidodecodigo[j] == "\n":
+                    if self.contenidodecodigo[j] == "\n":
                         self.linea += 1
                     j += 1
                 i = aux
                 continue
             # Identificar palabras reservadas, identificadores y números
-            if contenidodecodigo[i].isalpha():
+            if self.contenidodecodigo[i].isalpha():
                 j = i + 1
-                while j < len(contenidodecodigo) and (
-                    contenidodecodigo[j].isalnum() or contenidodecodigo[j] == "_"
+                while j < len(self.contenidodecodigo) and (
+                    self.contenidodecodigo[j].isalnum() or self.contenidodecodigo[j] == "_"
                 ):
                     j += 1
-                token = contenidodecodigo[i:j]
+                token = self.contenidodecodigo[i:j]
                 if token in self.palabras_reservadas:
-                    self.tokens.append(" " + token + "  --* " + self.palabras_reservadas[token] + " --* ")
+                    tokens.append(" " + token + "  --* " + self.palabras_reservadas[token] + " --* ")
                 else:
-                    self.tokens.append(" " + token + "  --* identificador --*")
+                    tokens.append(" " + token + "  --* identificador --*")
                 self.col += j - i
                 i = j
                 continue
-            elif contenidodecodigo[i].isdigit():
+            elif self.contenidodecodigo[i].isdigit():
                 j = i + 1
-                while j < len(contenidodecodigo) and contenidodecodigo[j].isdigit():
+                while j < len(self.contenidodecodigo) and self.contenidodecodigo[j].isdigit():
                     j += 1
-                if j < len(contenidodecodigo) and contenidodecodigo[j] == ".":
+                if j < len(self.contenidodecodigo) and self.contenidodecodigo[j] == ".":
                     j += 1
-                    while j < len(contenidodecodigo) and contenidodecodigo[j].isdigit():
+                    while j < len(self.contenidodecodigo) and self.contenidodecodigo[j].isdigit():
                         j += 1
-                    self.tokens.append(" " + contenidodecodigo[i:j] + " --* flotante --* ")
+                    tokens.append(" " + self.contenidodecodigo[i:j] + " --* flotante --* ")
                 else:
-                    self.tokens.append(" " + contenidodecodigo[i:j] + " --* entero --* ")
+                    tokens.append(" " + self.contenidodecodigo[i:j] + " --* entero --* ")
                 self.col += j - i
                 i = j
                 continue
             # Identificar símbolos especiales
-            if contenidodecodigo[i] in self.simbolos_especiales:
-                self.tokens.append(" " + contenidodecodigo[i] + "  --* simbolo especial --*")
+            if self.contenidodecodigo[i] in self.simbolos_especiales:
+                tokens.append(" " + self.contenidodecodigo[i] + "  --* simbolo especial --*")
                 i += 1
                 self.col += 1
                 continue
             # Identificar operadores aritméticos y relacionales
-            if contenidodecodigo[i : i + 2] in self.operadores_relacionales:
-                self.tokens.append(" " + contenidodecodigo[i : i + 2] + " --* operador relacional --*")
+            if self.contenidodecodigo[i : i + 2] in self.operadores_relacionales:
+                tokens.append(" " + self.contenidodecodigo[i : i + 2] + " --* operador relacional --*")
                 i += 2
                 self.col += 2
                 continue
-            elif contenidodecodigo[i] in self.operadores_relacionales:
-                self.tokens.append(" " + contenidodecodigo[i] + " --* operador relacional --*")
+            elif self.contenidodecodigo[i] in self.operadores_relacionales:
+                tokens.append(" " + self.contenidodecodigo[i] + " --* operador relacional --*")
                 i += 1
                 continue
-            if contenidodecodigo[i : i + 2] in self.operadores_dobles:
-                self.tokens.append(" " + contenidodecodigo[i : i + 2] + "--* operador aritmetico --*")
+            if self.contenidodecodigo[i : i + 2] in self.operadores_logicos:
+                tokens.append(" " + self.contenidodecodigo[i : i + 2] + " --* operador logico --*")
+                i += 2
+                self.col += 2
+                continue
+            elif self.contenidodecodigo[i] in self.operadores_logicos:
+                tokens.append(" " + self.contenidodecodigo[i] + " --* operador logico --*")
+                i += 1
+                continue
+            if self.contenidodecodigo[i : i + 2] in self.operadores_dobles:
+                tokens.append(" " + self.contenidodecodigo[i : i + 2] + "--* operador aritmetico --*")
                 i += 2
                 self.col += 1
                 continue
-            elif contenidodecodigo[i] in self.operadores_aritmeticos:
-                self.tokens.append(" " + contenidodecodigo[i] + "  --* operador aritmetico --*")
+            elif self.contenidodecodigo[i] in self.operadores_aritmeticos:
+                tokens.append(" " + self.contenidodecodigo[i] + "  --* operador aritmetico --*")
                 i += 1
                 self.col += 1
                 continue
             else:
-                self.errors.append(
+                errors.append(
                     "error:'"
-                    + contenidodecodigo[i]
+                    + self.contenidodecodigo[i]
                     + "'(linea:"
                     + str(self.linea)
                     + ", columna: "
@@ -152,15 +180,17 @@ class LexicalScaner:
                 i += 1
                 self.col += 1
                 continue
+        
         # Ingresa lo tokens a txt
-        f = open("src/assets/lexico.txt", "w")
-        for item in self.tokens:
-            print(item)
-            f.write(item + "\n")
-        f.close()
+        with open("src/assets/lexico.txt", "w") as f:
+            for item in tokens:
+                print(item)
+                f.write(item + "\n")
+            f.close()
         # Ingresa los errores a un txt
-        f = open("src/assets/errors.txt", "w")
-        for error in self.errors:
-            print(error)
-            f.write(error + "\n")
-        f.close()
+        with open("src/assets/errors.txt", "w") as f:
+            for error in errors:
+                print(error)
+                f.write(error + "\n")
+            f.close()
+
