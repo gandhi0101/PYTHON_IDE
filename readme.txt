@@ -1,15 +1,72 @@
-python 3.11.8
-usaremos entornos virtuales para no gernerar problemas con las librerias
-instalar virtualenv
-        pip install virtualenv
-con el siguiente comando creamos el entorno virtuale
-        virtualenv -p python env_IDE
-activamos el entorno
-        .\env_IDE\Scripts\activate 
-en la carpeta src estaran todo el desarrollo
+### README 
 
-dentro del entrorno virtual installamos 
-        pip install PyQt5
+#### Project Setup
 
-ya estando dentro del entorno virtual el codigo se corre con el sigueinte comando
-         py .\src\window.py                                                                                                             
+**Python Version:** 3.11.8
+
+To avoid issues with libraries, we will use virtual environments.
+
+1. **Install `virtualenv`:**
+    ```bash
+    pip install virtualenv
+    ```
+
+2. **Create the virtual environment:**
+    ```bash
+    virtualenv -p python env_IDE
+    ```
+
+3. **Activate the virtual environment:**
+    ```bash
+    .\env_IDE\Scripts\activate
+    ```
+
+4. **Navigate to the `src` folder for all development work.**
+
+5. **Install required libraries within the virtual environment:**
+    ```bash
+    pip install PyQt5
+    ```
+
+6. **Run the code within the virtual environment:**
+    ```bash
+    py .\src\window.py
+    ```
+
+---
+
+### README 
+
+#### Configuración del Proyecto
+
+**Versión de Python:** 3.11.8
+
+Para evitar problemas con las librerías, usaremos entornos virtuales.
+
+1. **Instalar `virtualenv`:**
+    ```bash
+    pip install virtualenv
+    ```
+
+2. **Crear el entorno virtual:**
+    ```bash
+    virtualenv -p python env_IDE
+    ```
+
+3. **Activar el entorno virtual:**
+    ```bash
+    .\env_IDE\Scripts\activate
+    ```
+
+4. **Navegar a la carpeta `src` para todo el desarrollo.**
+
+5. **Instalar las librerías necesarias dentro del entorno virtual:**
+    ```bash
+    pip install PyQt5
+    ```
+
+6. **Ejecutar el código dentro del entorno virtual:**
+    ```bash
+    py .\src\window.py
+    ```
+
