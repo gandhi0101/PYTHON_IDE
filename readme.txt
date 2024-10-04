@@ -1,6 +1,6 @@
-### README 
+# README 
 
-#### Project Setup
+## Project Setup
 
 **Python Version:** 3.11.8
 
@@ -30,10 +30,9 @@ To avoid issues with libraries, we will use virtual environments.
 
 6. **Run the code within the virtual environment:**
     ```bash
-    py .\src\window.py
+    py .\src\main.py
     ```
 
----
 
 ### README 
 
@@ -67,6 +66,6 @@ Para evitar problemas con las librerías, usaremos entornos virtuales.
 
 6. **Ejecutar el código dentro del entorno virtual:**
     ```bash
-    py .\src\window.py
+    py .\src\main.py
     ```
 
