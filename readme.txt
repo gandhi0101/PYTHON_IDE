@@ -34,7 +34,7 @@ To avoid issues with libraries, we will use virtual environments.
     ```
 
 
-### README 
+## (spanish)
 
 #### Configuración del Proyecto
 
