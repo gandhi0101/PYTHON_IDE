@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QTabWidget, QWidget, QTextEdit, QTreeVi
 def setup_output_tabs(ide):
 	ide.special_output_widget = QWidget(ide)
 	
-	ide.special_output_widget.setGeometry(900, 0, 550, 800)
+	ide.special_output_widget.setGeometry(900, 0, 550, 900)
 	ide.special_output_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
 	layout_special_output = QVBoxLayout(ide.special_output_widget)
 
@@ -18,7 +18,7 @@ def setup_output_tabs(ide):
 
 def setup_bottom_widget(ide):
 	bottom_widget = QWidget(ide)
-	bottom_widget.setGeometry(-15, 500, 950, 300)
+	bottom_widget.setGeometry(-15, 600, 950, 300)
 	layout_errors = QVBoxLayout(bottom_widget)
 
 	ide.errors_widget = QTabWidget(ide)
