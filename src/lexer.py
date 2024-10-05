@@ -112,9 +112,9 @@ class LexicalScaner:
 					j += 1
 				token = self.contenidodecodigo[i:j]
 				if token in self.palabras_reservadas:
-					tokens.append(" " + token + "  --* " + self.palabras_reservadas[token] + " --* ")
+					tokens.append(" " + token + "  --* " + self.palabras_reservadas[token] + " --* "+ str(self.linea))
 				else:
-					tokens.append(" " + token + "  --* identificador --*")
+					tokens.append(" " + token + "  --* identificador --*"+ str(self.linea))
 				self.col += j - i
 				i = j
 				continue
@@ -126,44 +126,44 @@ class LexicalScaner:
 					j += 1
 					while j < len(self.contenidodecodigo) and self.contenidodecodigo[j].isdigit():
 						j += 1
-					tokens.append(" " + self.contenidodecodigo[i:j] + " --* flotante --* ")
+					tokens.append(" " + self.contenidodecodigo[i:j] + " --* flotante --* "+ str(self.linea))
 				else:
-					tokens.append(" " + self.contenidodecodigo[i:j] + " --* entero --* ")
+					tokens.append(" " + self.contenidodecodigo[i:j] + " --* entero --* "+ str(self.linea))
 				self.col += j - i
 				i = j
 				continue
 			# Identificar símbolos especiales
 			if self.contenidodecodigo[i] in self.simbolos_especiales:
-				tokens.append(" " + self.contenidodecodigo[i] + "  --* simbolo especial --*")
+				tokens.append(" " + self.contenidodecodigo[i] + "  --* simbolo especial --*"+ str(self.linea))
 				i += 1
 				self.col += 1
 				continue
 			# Identificar operadores aritméticos y relacionales
 			if self.contenidodecodigo[i : i + 2] in self.operadores_relacionales:
-				tokens.append(" " + self.contenidodecodigo[i : i + 2] + " --* operador relacional --*")
+				tokens.append(" " + self.contenidodecodigo[i : i + 2] + " --* operador relacional --*"+ str(self.linea))
 				i += 2
 				self.col += 2
 				continue
 			elif self.contenidodecodigo[i] in self.operadores_relacionales:
-				tokens.append(" " + self.contenidodecodigo[i] + " --* operador relacional --*")
+				tokens.append(" " + self.contenidodecodigo[i] + " --* operador relacional --*"+ str(self.linea))
 				i += 1
 				continue
 			if self.contenidodecodigo[i : i + 2] in self.operadores_logicos:
-				tokens.append(" " + self.contenidodecodigo[i : i + 2] + " --* operador logico --*")
+				tokens.append(" " + self.contenidodecodigo[i : i + 2] + " --* operador logico --*"+ str(self.linea))
 				i += 2
 				self.col += 2
 				continue
 			elif self.contenidodecodigo[i] in self.operadores_logicos:
-				tokens.append(" " + self.contenidodecodigo[i] + " --* operador logico --*")
+				tokens.append(" " + self.contenidodecodigo[i] + " --* operador logico --*"+ str(self.linea))
 				i += 1
 				continue
 			if self.contenidodecodigo[i : i + 2] in self.operadores_dobles:
-				tokens.append(" " + self.contenidodecodigo[i : i + 2] + "--* operador aritmetico --*")
+				tokens.append(" " + self.contenidodecodigo[i : i + 2] + "--* operador aritmetico --*"+ str(self.linea))
 				i += 2
 				self.col += 1
 				continue
 			elif self.contenidodecodigo[i] in self.operadores_aritmeticos:
-				tokens.append(" " + self.contenidodecodigo[i] + "  --* operador aritmetico --*")
+				tokens.append(" " + self.contenidodecodigo[i] + "  --* operador aritmetico --*"+ str(self.linea))
 				i += 1
 				self.col += 1
 				continue
