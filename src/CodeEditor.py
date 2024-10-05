@@ -157,6 +157,7 @@ class CodeEditor(QPlainTextEdit):
 			"color6": QColor(Qt.cyan),  # Operadores relacionales
 			"color7": QColor(Qt.darkCyan),  # Operadores lógicos
 			"color8": QColor(Qt.darkGray),  # Símbolos
+			"color9": QColor(Qt.darkMagenta),  # Cadenas de texto
 		}
 		# Definición de patrones para cada token y su color correspondiente
 		patterns = [
@@ -167,6 +168,7 @@ class CodeEditor(QPlainTextEdit):
 			(r"(and|or)", "color7", ),  # Operadores lógicos
 			(r"\b(for|if|else|do|while|switch|case|integer|double|main|cin|cout)\b","color4",),  # Palabras reservadas
 			(r"(\(|\)|\{|\}|\,|\;)", "color8", ),  # Símbolos
+			(r"\"(.*?)\"", "color9", ),  # Cadenas de texto
 			(r"\/\*(.*?)\*/","color3", re.DOTALL),  # Comentario de múltiples líneas
 			(r"(//.*)", "color3", )  # Coment de una línea 
 		]
