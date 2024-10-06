@@ -69,6 +69,49 @@ class PythonIDE(QMainWindow):
 			with open("src/assets/errors.txt", "r") as file_error:
 				self.output_lexical_error(  file_error.read())
 				file_error.close()
+	
+	def run_semantic(self):
+		# Borrar contenido anterior
+		self.text_semanticErrors.clear()
+
+		print("run semantic")
+		
+		if(self.current_file==''):
+			self.menu_handler.confirm_save_changes()
+		else:
+			try:
+			# Crear una instancia de SemanticProcessor
+				processor = semantic.SemanticProcessor()
+
+		
+			except Exception as e:
+				print(e)
+
+			try:
+				self.output_semamtic()
+				with open("src/assets/errores_semanticos.txt", "r") as file_error:
+					self.output_semantic_error(file_error.read())
+					file_error.close()
+			except Exception as e:
+				print(e)
+		
+	def run_syntax(self):
+		# Limpia el contenido del QTreeView
+		self.text_syntaxErrors.clear()
+			
+		sintax = Syntax()
+		sintax.sintaxis("src/assets/lexico.txt")
+		#sintax.clearfiles(self)
+
+		file = open("src/assets/arbolSintactico.txt", "r")
+		self.output_syntax()
+		file.close()
+		file_error = open("src/assets/erroresSintactico.txt", "r")
+		self.output_syntax_error(  file_error.read())
+		file_error.close()
+
+		print("run syntax")
+	
 	  
 	def handleTextChanged(self):
 		# Verificar si el texto actual es igual al placeholder
@@ -93,22 +136,6 @@ class PythonIDE(QMainWindow):
 		self.errors_widget.setCurrentIndex(index)
 	
 	
-	def run_syntax(self):
-		# Limpia el contenido del QTreeView
-		self.text_syntaxErrors.clear()
-			
-		sintax = Syntax()
-		sintax.sintaxis("src/assets/lexico.txt")
-		#sintax.clearfiles(self)
-
-		file = open("src/assets/arbolSintactico.txt", "r")
-		self.output_syntax()
-		file.close()
-		file_error = open("src/assets/erroresSintactico.txt", "r")
-		self.output_syntax_error(  file_error.read())
-		file_error.close()
-
-		print("run syntax")
 
 	def output_syntax(self ):
 		tree_view_syntax = TreeViewSyntax("src/assets/arbolSintactico.txt") 
@@ -123,22 +150,22 @@ class PythonIDE(QMainWindow):
 		index = self.errors_widget.indexOf(self.text_syntaxErrors)
 		self.errors_widget.setCurrentIndex(index)
 	
-	def run_semantic(self):
-		
-		
-	 	# Borrar contenido anterior
-		self.text_semanticOutput.clear()
-		self.text_semanticErrors.clear()
 
-		print("run semantic")
-		try:
-			# Crear una instancia de SemanticProcessor
-			processor = semantic.SemanticProcessor("src/assets/lexico.txt", "src/assets/errores_semanticos.txt")
+	def output_semamtic(self):
+		print("output semamtic")
+		tree_view_semantic = TreeViewSyntax("src/assets/arbol_sintactico_anotado.txt") 
+		self.text_semanticOutput.setModel(tree_view_semantic.model)
 
-			processor.semantic()
-		except Exception as e:
-			print(e)
+		self.text_semanticOutput.expandAll()
+		index = self.errors_widget.indexOf(self.text_semanticOutput)
+		self.errors_widget.setCurrentIndex(index)
 
+
+	def output_semantic_error(self, out):
+		print("output semamtic error")
+		self.text_semanticErrors.setPlainText(out)
+		index = self.errors_widget.indexOf(self.text_semanticErrors)
+		self.errors_widget.setCurrentIndex(index)
 
 		
 	def update_line_column_info(self):
