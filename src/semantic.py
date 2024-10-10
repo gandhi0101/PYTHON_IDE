@@ -6,15 +6,23 @@ class Token:
 
 
 class Node:
-	def __init__(self, value, line_no=None, children=None):
+	def __init__(self, value, line_no=None, children=None, val = None , type = None):
+		#value es el token
 		self.value = value
 		self.line_no = line_no
-		self.type = None
-		self.val = None
+		self.type = type
+		self.val = val
+		self.parent = None  # Atributo para rastrear el padre del nodo en el árbol
 		self.children = children or []
 
 	def add_child(self, node):
+		node.parent = self
 		self.children.append(node)
+
+	def __repr__(self):
+		return f"Node(value={self.value}, type={self.type}, val={self.val}, line_no={self.line_no})"
+		
+
 class Parser:
 	def __init__(self, tokens):
 		self.tokens = tokens
@@ -108,7 +116,7 @@ class Parser:
 			#self.match(";")
 		elif self.current_token and self.current_token.token_type == "id":
 			root = Node("Asignación")
-			id_node = Node(self.current_token.value, line_no=self.current_token.line_no)
+			id_node = Node(self.current_token.value, line_no=self.current_token.line_no, type = self.current_token.token_type, val = 0)
 			self.match("id")
 			root.add_child(id_node)
 			if self.current_token and self.current_token.token_type in ["++", "--"]:
@@ -136,8 +144,13 @@ class Parser:
 					operand_node = Node(self.current_token.value, line_no=self.current_token.line_no)
 					id_node.add_child(operand_node)
 					self.match(self.current_token.token_type)
+
 			else:
 				self.match("=")
+				root.val = self.current_token.value
+				#en el hijo (lista hijo ) hacer un recoriddo de la lista para asignar los valores
+				if(len(root.children)== 1):
+					root.children[0].val = root.val
 				expr_node = self.expr()
 				root.add_child(expr_node)
 			self.match(";")
@@ -285,9 +298,18 @@ class Parser:
 			self.match("(")
 			root = self.expr()
 			self.match(")")
-		elif self.current_token and self.current_token.token_type in ["id", "num"]:
-			root = Node(self.current_token.value, line_no=self.current_token.line_no)
+		elif self.current_token and self.current_token.token_type == "num":
+			root = Node(self.current_token.value, line_no=self.current_token.line_no, val=self.current_token.value, type=self.current_token.token_type)
 			self.match(self.current_token.token_type)
+
+		elif self.current_token and self.current_token.token_type == "id":
+
+			root = Node(self.current_token.value, 
+			   line_no=self.current_token.line_no, 
+			   type = self.current_token.token_type
+			   ) 
+			self.match(self.current_token.token_type)
+
 		else:
 			root = Node("Error")
 			error_token = self.current_token.value if self.current_token else None
@@ -305,20 +327,23 @@ class Parser:
 
 
 class SemanticAnalyzer:
-	def __init__(self):
+	def __init__(self, ast):
+		self.ast = ast
 		self.errors = []
 		self.symbol_table = {}
+		self.memoria = []
 
 	def analyze(self, ast):
 		self.visit_node(ast)
 
 	def visit_node(self, node):
+		
 		if node.value == "DeclaraciónInt":
 			self.handle_int_declaration(node)
 		elif node.value == "DeclaraciónFloat":
 			self.handle_float_declaration(node)
 		elif node.value == "Asignación":
-			self.handle_assignment(node)
+			self.handle_assignment(node, current_node = node.children)
 
 		for child in node.children:
 			self.visit_node(child)
@@ -347,8 +372,10 @@ class SemanticAnalyzer:
 				"line_numbers": [node.children[0].line_no],
 			}
 
-	def handle_assignment(self, node):
+	def handle_assignment(self, node, current_node):
 		variable_name = node.children[0].value
+		
+		
 		if variable_name not in self.symbol_table:
 			self.errors.append(f"No declarado: Variable {variable_name} no se ha declarado")
 		else:
@@ -367,19 +394,37 @@ class SemanticAnalyzer:
 				value = self.evaluate_expression(expr_node)
 				node.children.val = value
 				variable_info['value'] = value
-			
-
+				
+	def evaluate_expression(self, parentnode):
+		# Recursivamente recorrer el árbol para obtener los valores actuales
+		i = 0
+		
+		if isinstance(parentnode, Node):
+			#print(f"Visitando nodo: {parentnode.value}")
+			for child in parentnode.children:
+				if(child.value == "DeclaracionInt"):
+					self.memoria.append(child.children[0].value)
+				# elif(child.parent.value == 'Asignación' and child.type == 'id'):
+				# 	lista = self.memoria
+				# 	self.memoria = [{child.value: child.childre} if v in valores_objetivo else {v: None} for v in valores]
+					
+				# self.evaluate_expression(child)
+		else:
+			#print(f"Visitando nodo: {parentnode[0].value}")
+			self.evaluate_expression(parentnode[0])
+				
 
 
 
 class SemanticProcessor:
 	def __init__(self):
 		# Código principal
+		self.memoria = []
 		with open("src/assets/lexico.txt", "r") as file:
 				lines = file.readlines()
 
 		# Crear la lista de objetos Token
-		self.token_list = []
+		token_list = []
 
 		for line in lines:
 			line = line.strip()
@@ -399,16 +444,17 @@ class SemanticProcessor:
 					value = token_parts[0].strip()
 				line_no = token_parts[2].strip()
 				token = Token(token_type, value, line_no)
-				self.token_list.append(token)
+				token_list.append(token)
 
 	
-		parser = Parser(self.token_list)
+		parser = Parser(token_list)
 		ast = parser.parse()
 		#mostar en un archivo el ast 
 
 		# Crear instancia del SemanticAnalyzer y analizar el árbol sintáctico
-		semantic_analyzer = SemanticAnalyzer()
+		semantic_analyzer = SemanticAnalyzer(ast)
 		semantic_analyzer.analyze(ast)
+		#semantic_analyzer.evaluate_expression( parentnode = ast.children)
 
 		# Guardar errores semánticos en un archivo
 		with open("src/assets/errores_semanticos.txt", "w", encoding="utf-8") as error_file:
@@ -423,25 +469,175 @@ class SemanticProcessor:
 		# Crear un archivo de texto para la tabla de símbolos
 		self.create_symbol_table_text(semantic_analyzer.symbol_table, "src/assets/tabla_simbolos.txt")
 		
+	def check_memoria(self, node ):
+		for item in self.memoria:  #comparando cada uno de los valores que tengan info
+			if node.type != "id" and node.type != 'num': break
+			if( node.value == item['value'] ):
+				
+				if node.val == None :
+					node.val = item['val']
+					break
+	def update_Node_memoria(self, node):
+		for item in self.memoria:  #comparando cada uno de los valores que tengan info
+			if node.type!= "id" and node.type!= 'num': break
+			if( node.value == item['value'] ):
+				node.val = item['val'] 
+				break
+	def update_memoria(self, node):
+		for item in self.memoria:  #comparando cada uno de los valores que tengan info
+			if node.type!= "id" and node.type!= 'num': break
+			if( node.value == item['value'] ):
+				item['val'] = node.val
+				break
+			
+	def detectar_operacion(self, node):
 		
+		if node.value == '*':
+
+			multiplicado = 1
+			for child in node.children:
+				self.check_memoria(child)
+				multiplicado *= int(child.val)
+						
+			node.val = multiplicado
+			node.parent.val = multiplicado
+			node.children[0].val = multiplicado
+			self.update_memoria(node.children[0])
+
+		if node.value == '/':
+			
+			
+			dividendo = None
+			for child in node.children:
+				try:
+					self.update_Node_memoria(child)
+					valor_hijo = int(child.val)
+					if valor_hijo == 0:
+						raise ZeroDivisionError(f"División por cero en la línea {node.line_no}")
+					if dividendo is None:
+						dividendo = valor_hijo
+					else:
+						dividendo /= valor_hijo
+				except ValueError:
+					print(f"Error: El valor del hijo '{child.val}' no es un número entero válido en la línea {node.line_no}")
+					return None
+				except ZeroDivisionError as e:
+					print(e)
+            
+			
+			node.val = dividendo
+			node.parent.val = dividendo
+			node.children[0].val = dividendo
+			self.update_memoria(node.children[0])
+
+		if node.value == '+':
+			suma = 0
+			for child in node.children:
+				self.check_memoria(child)
+				suma += int(child.val)
+			node.val = suma
+			node.parent.val = suma
+			node.children[0].val = multiplicado
+			self.update_memoria(node.children[0])
+		
+		if node.value == '-':
+			resta = 0
+			for child in node.children:
+				self.check_memoria(child)
+				resta += int(child.val)
+			node.val = resta
+			node.parent.val = resta
+			node.children[0].val = multiplicado
+			self.update_memoria(node.children[0])
+		# si es operacion exponencial ^
+		if node.value == '^':
+				exponente = 1
+				base = 1
+				for child in node.children:
+					self.check_memoria(child)
+					if child.value == '^':
+						exponente = int(child.val)
+					else:
+						base = int(child.val)
+				node.val = base ** exponente
+				node.parent.val = base ** exponente
+				node.children[0].val = multiplicado
+				self.update_memoria(node.children[0])
+		# si es operacion modulo %
+		if node.value == '%':
+			modulo = 1
+			dividendo = 1
+			for child in node.children:
+				self.check_memoria(child)
+				if child.value == '%':
+					modulo = int(child.val)
+				else:
+					dividendo = int(child.val)
+			if modulo == 0:
+				print(f"Error: División por cero en la línea {node.line_no}")
+				exit()
+			
+			node.val = dividendo % modulo
+			node.parent.val = dividendo % modulo
+			node.children[0].val = multiplicado
+			self.update_memoria(node.children[0])
+
+
 	# Función para anotar el árbol sintáctico
 	def annotate_tree(self, node, level=0, output=None):
 		indent = " | " * level
+
+				
+		if node.parent is not None:
+			if node.parent.value == 'Asignación' :
+				if self.memoria != []:
+					for item in self.memoria:  #comparando cada uno de los valores que tengan info
+							if( node.value != item['value'] and node.type == "id"):
+								
+								self.memoria.append({ 'value':node.value, 'val':node.val})
+							else:
+								break
+							if node.val == None :
+								node.val = item['val']
+								
+				else:
+					self.memoria.append({'value':node.value, 'val':node.val})
+
+		#self.detectar_operacion(node)
+
 		if output:
-			if (node.line_no != None):
+			
+
+			if (node.line_no != None):				
 				value_str = f"{node.value} ( Línea {node.line_no})"
 				if hasattr(node, "type"):
 					value_str += f" [Tipo: {node.type}]"
 				if hasattr(node, "val"):
-					value_str += f" [Valor: {node.val}]"
+					self.update_Node_memoria(node)
+					if (node.val == node.value and node.type == 'id'):
+						value_str 
+					else:
+						value_str += f" [Valor: {node.val}]"
 				output.write(f"{indent}{value_str}\n")
 			else:
 				value_str = f"{node.value}"
 				if hasattr(node, "type"):
 					value_str 
 				if hasattr(node, "val"):
-					value_str
+					#asignacion cambia
+					if node.value == 'Asignación':
+						node.val = node.children[1].val
+
+						if  node.val == None:
+							
+							self.detectar_operacion(node.children[1])
+
+						value_str += f" [Valor: {node.val}]"
+					else:
+						value_str
 				output.write(f"{indent}{value_str}\n")
+		
+						
 		for child in node.children:
 			self.annotate_tree(child, level + 1, output)
 
