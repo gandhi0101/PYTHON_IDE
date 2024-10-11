@@ -1,3 +1,4 @@
+from math import pow  # Import pow function for exponentiation
 class Token:
 	def __init__(self, token_type, value, line_no = None):
 		self.token_type = token_type
@@ -12,7 +13,7 @@ class Node:
 		self.line_no = line_no
 		self.type = type
 		self.val = val
-		self.parent = None  # Atributo para rastrear el padre del nodo en el árbol
+		self.parent = None  # Atributo para rastrear el padre del nodo en el arbol
 		self.children = children or []
 
 	def add_child(self, node):
@@ -49,7 +50,7 @@ class Parser:
 				else "fin de entrada"
 			)
 			self.errors.append(
-				f"Se esperaba {expected_token}, se encontró {found_token}"
+				f"Se esperaba {expected_token}, se encontro {found_token}"
 			)
 			self.advance()
 
@@ -99,7 +100,7 @@ class Parser:
 
 	def stmt(self):
 		if self.current_token and self.current_token.token_type == "int":
-			#root = Node("DeclaraciónInt")
+			#root = Node("DeclaracionInt")
 			#self.match("int")
 
 			#root.add_child(self.idList())
@@ -108,14 +109,14 @@ class Parser:
 		elif self.current_token and self.current_token.token_type == "do":
 			root = self.do_while_stmt()
 		elif self.current_token and self.current_token.token_type == "float":
-			#root = Node("DeclaraciónFloat")
+			#root = Node("DeclaracionFloat")
 			#self.match("float")
 			
 			#root.add_child(self.idList())
 			root = self.idListFloat()
 			#self.match(";")
 		elif self.current_token and self.current_token.token_type == "id":
-			root = Node("Asignación")
+			root = Node("Asignacion")
 			id_node = Node(self.current_token.value, line_no=self.current_token.line_no, type = self.current_token.token_type, val = 0)
 			self.match("id")
 			root.add_child(id_node)
@@ -203,7 +204,7 @@ class Parser:
 			root = Node("Error")
 			error_token = self.current_token.value if self.current_token else None
 			if error_token:
-				self.errors.append(f"Sentencia inválida: {error_token}")
+				self.errors.append(f"Sentencia invalida: {error_token}")
 			self.advance()
 		return root
 
@@ -313,16 +314,16 @@ class Parser:
 		else:
 			root = Node("Error")
 			error_token = self.current_token.value if self.current_token else None
-			self.errors.append(f"Factor inválido: {error_token}")
+			self.errors.append(f"Factor invalido: {error_token}")
 			self.advance()
 		return root
 
 	def parse(self):
 		ast = self.program()
 		if self.errors:
-			print("Se encontraron errores de sintaxis. La compilación ha fallado.")
+			print("Se encontraron errores de sintaxis. La compilacion ha fallado.")
 		else:
-			print("La sintaxis es correcta. La compilación ha sido exitosa.")
+			print("La sintaxis es correcta. La compilacion ha sido exitosa.")
 		return ast
 
 
@@ -337,66 +338,72 @@ class SemanticAnalyzer:
 		self.visit_node(ast)
 
 	def visit_node(self, node):
+		if node.parent is not None:
 		
-		if node.value == "DeclaraciónInt":
-			self.handle_int_declaration(node)
-		elif node.value == "DeclaraciónFloat":
-			self.handle_float_declaration(node)
-		elif node.value == "Asignación":
-			self.handle_assignment(node, current_node = node.children)
+			if node.value == "DeclaracionInt":
+				self.handle_int_declaration(node)
+			elif node.value == "DeclaracionFloat":
+				self.handle_float_declaration(node)
+			elif node.value == "Asignacion":
+				self.handle_assignment(node, current_node = node.children)
+			#print(f"node: {node.value}, valor: {node.val} , parent: {node.parent.value}")
 
 		for child in node.children:
 			self.visit_node(child)
 
 	def handle_int_declaration(self, node):
-		variable_name = node.children[0].value
-		if variable_name in self.symbol_table:
-			self.errors.append(f"Duplicado: Variable {variable_name} ya declarada")
-		else:
-			self.symbol_table[variable_name] = {
-				"type": "int",
-				"val": node.value,
-				"loc":"default_location" ,
-				"line_numbers": [node.children[0].line_no],
-			}
+		for var_node in node.children:  # Puede haber múltiples variables declaradas en la misma línea
+			variable_name = var_node.value
+			if variable_name in self.symbol_table:
+				self.errors.append(f"Duplicado: Variable '{variable_name}' ya declarada")
+			else:
+				# Guardar la variable en la tabla de símbolos
+				self.symbol_table[variable_name] = {
+					"type": "int",
+					"value": None,
+					"loc": "default_location",
+					"line_numbers": [var_node.line_no],
+				}
+	
 
 	def handle_float_declaration(self, node):
-		variable_name = node.children[0].value
-		if variable_name in self.symbol_table:
-			self.errors.append(f"Duplicado: Variable {variable_name} ya declarada")
-		else:
-			self.symbol_table[variable_name] = {
-				"type": "float",
-				"val": node.value,
-				"loc":"default_location" ,
-				"line_numbers": [node.children[0].line_no],
-			}
+		for var_node in node.children:
+			variable_name = var_node.value
+			if variable_name in self.symbol_table:
+				self.errors.append(f"Duplicado: Variable '{variable_name}' ya declarada")
+			else:
+				# Guardar la variable en la tabla de símbolos
+				self.symbol_table[variable_name] = {
+					"type": "float",
+					"value": None,
+					"loc": "default_location",
+					"line_numbers": [var_node.line_no],
+				}
 
 	def handle_assignment(self, node, current_node):
-		variable_name = node.children[0].value
-		
-		
-		if variable_name not in self.symbol_table:
-			self.errors.append(f"No declarado: Variable {variable_name} no se ha declarado")
-		else:
-			# Proceso de asignación
-			variable_info = self.symbol_table[variable_name]
-			node.children.type = variable_info['type']
-			print( variable_info['type'])
 
-			node.children.val = variable_info['value']
-			print( variable_info['value'])
-			# Aquí puedes agregar más lógica para manejar la asignación de valores
-			# Por ejemplo, si el nodo tiene un hijo que representa una expresión, puedes evaluar esa expresión y asignar el valor
-			if len(node.children) > 1:
-				expr_node = node.children
-				# Supongamos que tienes una función para evaluar expresiones
-				value = self.evaluate_expression(expr_node)
-				node.children.val = value
-				variable_info['value'] = value
+		variable_name = node.children[0].value
+		expr_value = node.children[1].value
+
+		if variable_name not in self.symbol_table:
+			self.errors.append(f"No declarado: Variable '{variable_name}' no está declarada.")
+			return
+		
+		symbol_info = self.symbol_table[variable_name]
+		# Validar tipos antes de la asignación
+		
+		if symbol_info["type"] == "int" and isinstance(expr_value, float):
+			self.errors.append(f"Error de tipo: No se puede asignar un valor flotante a la variable entera '{variable_name}'")
+		# elif symbol_info["type"] == "float" and not isinstance(expr_value, (float, int)):
+		# 	self.errors.append(f"Error de tipo: No se puede asignar un valor no numérico a la variable flotante '{variable_name}'")
+		else:
+			# Asignar el valor a la variable si todo es correcto
+			symbol_info["value"] = expr_value
+
+
 				
 	def evaluate_expression(self, parentnode):
-		# Recursivamente recorrer el árbol para obtener los valores actuales
+		# Recursivamente recorrer el arbol para obtener los valores actuales
 		i = 0
 		
 		if isinstance(parentnode, Node):
@@ -404,7 +411,7 @@ class SemanticAnalyzer:
 			for child in parentnode.children:
 				if(child.value == "DeclaracionInt"):
 					self.memoria.append(child.children[0].value)
-				# elif(child.parent.value == 'Asignación' and child.type == 'id'):
+				# elif(child.parent.value == 'Asignacion' and child.type == 'id'):
 				# 	lista = self.memoria
 				# 	self.memoria = [{child.value: child.childre} if v in valores_objetivo else {v: None} for v in valores]
 					
@@ -418,7 +425,7 @@ class SemanticAnalyzer:
 
 class SemanticProcessor:
 	def __init__(self):
-		# Código principal
+		# Codigo principal
 		self.memoria = []
 		with open("src/assets/lexico.txt", "r") as file:
 				lines = file.readlines()
@@ -451,22 +458,22 @@ class SemanticProcessor:
 		ast = parser.parse()
 		#mostar en un archivo el ast 
 
-		# Crear instancia del SemanticAnalyzer y analizar el árbol sintáctico
+		# Crear instancia del SemanticAnalyzer y analizar el arbol sintactico
 		semantic_analyzer = SemanticAnalyzer(ast)
 		semantic_analyzer.analyze(ast)
 		#semantic_analyzer.evaluate_expression( parentnode = ast.children)
 
-		# Guardar errores semánticos en un archivo
+		# Guardar errores semanticos en un archivo
 		with open("src/assets/errores_semanticos.txt", "w", encoding="utf-8") as error_file:
 			for error in semantic_analyzer.errors:
 				error_file.write(error + "\n")
 
-		# Anotar el árbol sintáctico
+		# Anotar el arbol sintactico
 		with open("src/assets/arbol_sintactico_anotado.txt", "w", encoding="utf-8") as annotated_tree_file:
-			annotated_tree_file.write("Árbol Sintáctico Anotado:\n")
+			annotated_tree_file.write("arbol Sintactico Anotado:\n")
 			self.annotate_tree(ast, output=annotated_tree_file)
 
-		# Crear un archivo de texto para la tabla de símbolos
+		# Crear un archivo de texto para la tabla de sambolos
 		self.create_symbol_table_text(semantic_analyzer.symbol_table, "src/assets/tabla_simbolos.txt")
 		
 	def check_memoria(self, node ):
@@ -490,106 +497,95 @@ class SemanticProcessor:
 				item['val'] = node.val
 				break
 			
+
+
 	def detectar_operacion(self, node):
-		
-		if node.value == '*':
+		"""
+		Detects the operation of a node and performs the calculation recursively.
 
-			multiplicado = 1
-			for child in node.children:
-				self.check_memoria(child)
-				multiplicado *= int(child.val)
-						
-			node.val = multiplicado
-			node.parent.val = multiplicado
-			node.children[0].val = multiplicado
-			self.update_memoria(node.children[0])
+		Args:
+			node (object): The node object representing the operation.
 
-		if node.value == '/':
-			
-			
-			dividendo = None
+		Returns:
+			None: If an error occurs (e.g., division by zero).
+		""" 
+		operators = {
+			'*': lambda x, y: x * y,
+			'/': lambda x, y: x / y,
+			'+': lambda x, y: x + y,
+			'-': lambda x, y: x - y,
+			'^': lambda x, y: x ** y,
+			'%': lambda x, y: x % y,
+		}
+
+		if node.value in operators:
+			# Recursively evaluate child nodes
 			for child in node.children:
-				try:
-					self.update_Node_memoria(child)
-					valor_hijo = int(child.val)
-					if valor_hijo == 0:
-						raise ZeroDivisionError(f"División por cero en la línea {node.line_no}")
-					if dividendo is None:
-						dividendo = valor_hijo
-					else:
-						dividendo /= valor_hijo
-				except ValueError:
-					print(f"Error: El valor del hijo '{child.val}' no es un número entero válido en la línea {node.line_no}")
+				result = self.detectar_operacion(child)
+				 
+				if child.val is None:
 					return None
-				except ZeroDivisionError as e:
-					print(e)
-            
-			
-			node.val = dividendo
-			node.parent.val = dividendo
-			node.children[0].val = dividendo
-			self.update_memoria(node.children[0])
 
-		if node.value == '+':
-			suma = 0
-			for child in node.children:
-				self.check_memoria(child)
-				suma += int(child.val)
-			node.val = suma
-			node.parent.val = suma
-			node.children[0].val = multiplicado
-			self.update_memoria(node.children[0])
-		
-		if node.value == '-':
-			resta = 0
-			for child in node.children:
-				self.check_memoria(child)
-				resta += int(child.val)
-			node.val = resta
-			node.parent.val = resta
-			node.children[0].val = multiplicado
-			self.update_memoria(node.children[0])
-		# si es operacion exponencial ^
-		if node.value == '^':
-				exponente = 1
-				base = 1
-				for child in node.children:
-					self.check_memoria(child)
-					if child.value == '^':
-						exponente = int(child.val)
-					else:
-						base = int(child.val)
-				node.val = base ** exponente
-				node.parent.val = base ** exponente
-				node.children[0].val = multiplicado
-				self.update_memoria(node.children[0])
-		# si es operacion modulo %
-		if node.value == '%':
-			modulo = 1
-			dividendo = 1
-			for child in node.children:
-				self.check_memoria(child)
-				if child.value == '%':
-					modulo = int(child.val)
-				else:
-					dividendo = int(child.val)
-			if modulo == 0:
-				print(f"Error: División por cero en la línea {node.line_no}")
-				exit()
-			
-			node.val = dividendo % modulo
-			node.parent.val = dividendo % modulo
-			node.children[0].val = multiplicado
-			self.update_memoria(node.children[0])
+			# Perform the operation on the results of child nodes
+			node.val = self._calculate(node.children, operators[node.value])
+
+			# Update parent and sibling nodes if necessary
+			if node.parent:
+				node.parent.val = self._calculate(node.parent.children, operators[node.parent.value])
+			for sibling in node.siblings:
+				sibling.val = self._calculate(sibling.children, operators[sibling.value])
+
+		return node.val
+
+	def _calculate(self, children, operation):
+		"""
+		Performs the provided operation on the values of child nodes.
+
+		Args:
+			children (list): List of child nodes.
+			operation (function): The operation to perform (e.g., addition, multiplication).
+
+		Returns:
+			float or int: The result of the operation.
+			None: If an error occurs (e.g., division by zero, value conversion error).
+		"""
+
+		try:
+			result = operation(*[child.val for child in children])
+			return result
+		except (ValueError, ZeroDivisionError) as e:
+			print(f"Error: {e}")
+			return None
 
 
-	# Función para anotar el árbol sintáctico
+	def _convert_to_number(self, value):
+		"""
+		Converts the value to a float or int, handling potential errors.
+
+		Args:
+			value (str): The value to convert.
+
+		Returns:
+			float or int: The converted value.
+		"""
+
+		try:
+			if value is not None and value.isdigit():
+				return float(value)
+		except ValueError:
+			try:
+				return int(value)
+			except ValueError:
+				# If neither float nor int conversion succeeds, handle the error as needed
+				print(f"Error: Invalid numeric value '{value}'")
+				return None
+		# Funcion para anotar el arbol sintactico
 	def annotate_tree(self, node, level=0, output=None):
 		indent = " | " * level
 
 				
 		if node.parent is not None:
-			if node.parent.value == 'Asignación' :
+			if node.parent.value == 'Asignacion' :
 				if self.memoria != []:
 					for item in self.memoria:  #comparando cada uno de los valores que tengan info
 							if( node.value != item['value'] and node.type == "id"):
@@ -609,7 +605,7 @@ class SemanticProcessor:
 			
 
 			if (node.line_no != None):				
-				value_str = f"{node.value} ( Línea {node.line_no})"
+				value_str = f"{node.value} ( Lanea {node.line_no})"
 				if hasattr(node, "type"):
 					value_str += f" [Tipo: {node.type}]"
 				if hasattr(node, "val"):
@@ -625,7 +621,7 @@ class SemanticProcessor:
 					value_str 
 				if hasattr(node, "val"):
 					#asignacion cambia
-					if node.value == 'Asignación':
+					if node.value == 'Asignacion':
 						node.val = node.children[1].val
 
 						if  node.val == None:
@@ -641,11 +637,11 @@ class SemanticProcessor:
 		for child in node.children:
 			self.annotate_tree(child, level + 1, output)
 
-	# Función para imprimir el árbol anotado y guardarlo en un archivo
+	# Funcion para imprimir el arbol anotado y guardarlo en un archivo
 	def print_ast(self, node, level=0, is_last_child=False, output=None):
 		indent = " | " * level
 		if output:
-			value_str = f"{node.value} (Línea {node.line_no})"
+			value_str = f"{node.value} (Lanea {node.line_no})"
 			if hasattr(node, "type"):
 				value_str += f" [Tipo: {node.type}]"
 			if hasattr(node, "val"):
@@ -655,16 +651,16 @@ class SemanticProcessor:
 			is_last = i == len(node.children) - 1
 			self.print_ast(child, level + 1, is_last, output)
 
-	# Función para crear un archivo de texto para la tabla de símbolos
+	# Funcion para crear un archivo de texto para la tabla de sambolos
 	def create_symbol_table_text(self, symbol_table, filename):
 		try:
 			with open(filename, "w") as file:
-				file.write("Nombre Variable\tTipo\tValor\tRegistro (loc)\tNúmeros de línea\n")
+				file.write("Nombre Variable\tTipo\tValor\tRegistro (loc)\tNameros de lanea\n")
 				for variable, data in symbol_table.items():
 					line_no_numbers = ", ".join(map(str, data['line_numbers']))
 					file.write(f"{variable}\t{data['type']}\t{data['value']}\t{data['loc']}\t{line_no_numbers}\n")
 		except Exception as e:
-			print(f"Error al crear el archivo de tabla de símbolos: {e}")
+			print(f"Error al crear el archivo de tabla de sambolos: {e}")
 	
 
 
