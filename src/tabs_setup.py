@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QVBoxLayout, QTabWidget, QWidget, QTextEdit, QTreeView, QSizePolicy
+from PyQt5.QtWidgets import QVBoxLayout, QTabWidget, QWidget, QTextEdit, QTreeView, QSizePolicy,QTableWidget,QTableWidgetItem
 
 def setup_output_tabs(ide):
 	ide.special_output_widget = QWidget(ide)
@@ -11,7 +11,7 @@ def setup_output_tabs(ide):
 	add_tab(ide, ide.special_output_tab, 'Lexico', QTextEdit(ide), 'text_lexicalOutput')
 	add_tab(ide, ide.special_output_tab, 'Sintactico', QTreeView(), 'text_syntaxOutput')
 	add_tab(ide, ide.special_output_tab, 'Semantico', QTreeView(), 'text_semanticOutput')
-	add_tab(ide, ide.special_output_tab, 'Hash Table', QTextEdit(ide), 'text_hashTabOutput')
+	add_tab(ide, ide.special_output_tab, 'Hash Table', QTableWidget(), 'text_hashTabOutput')
 	add_tab(ide, ide.special_output_tab, 'Codigo Intermedio', QTextEdit(ide), 'text_intermediateCodeOutput')
 
 	layout_special_output.addWidget(ide.special_output_tab)

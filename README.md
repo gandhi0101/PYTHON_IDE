@@ -61,7 +61,7 @@ Para evitar problemas con las librerías, usaremos entornos virtuales.
 
 5. **Instalar las librerías necesarias dentro del entorno virtual:**
     ```bash
-    pip install PyQt5
+    pip install PyQt5 tabulate
     ```
 
 6. **Ejecutar el código dentro del entorno virtual:**

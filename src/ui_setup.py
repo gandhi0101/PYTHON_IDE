@@ -1,9 +1,10 @@
 import contextlib
 from io import StringIO
-from PyQt5.QtWidgets import QMainWindow,QApplication, QVBoxLayout
+from PyQt5.QtWidgets import QMainWindow,QApplication, QVBoxLayout, QTableWidget,QTableWidgetItem
 from TreeViewSyntax import TreeViewSyntax
 from lexer import LexicalScaner
 import semantic
+import HashTable
 from sint import Syntax
 from tabs_setup import setup_output_tabs, setup_bottom_widget
 from code_execution import setup_editor
@@ -36,20 +37,21 @@ class PythonIDE(QMainWindow):
 		self.menu_handler = MenuHandler(self)
 		menubar = self.menuBar()
 	def run_code(self):
-		code = self.text_editor.toPlainText()
-		output_stream = StringIO()
+		print('Running code')
+		# code = self.text_editor.toPlainText()
+		# output_stream = StringIO()
 		
-		with contextlib.redirect_stdout(output_stream):
-			try:
-				exec(code)
-			except Exception as e:
-				print(e)
+		# with contextlib.redirect_stdout(output_stream):
+		# 	try:
+		# 		exec(code)
+		# 	except Exception as e:
+		# 		print(e)
 
-		output = output_stream.getvalue()
-		self.text_results.setPlainText(output)
-		# Seleccionar y mostrar la pestaña de resultados
-		index = self.errors_widget.indexOf(self.results)
-		self.errors_widget.setCurrentIndex(index)
+		# output = output_stream.getvalue()
+		# self.text_results.setPlainText(output)
+		# # Seleccionar y mostrar la pestaña de resultados
+		# index = self.errors_widget.indexOf(self.results)
+		# self.errors_widget.setCurrentIndex(index)
   
 	def run_lexical(self):
 	 # Borrar contenido anterior
@@ -72,28 +74,34 @@ class PythonIDE(QMainWindow):
 	
 	def run_semantic(self):
 		# Borrar contenido anterior
-		self.text_semanticErrors.clear()
-
-		print("run semantic")
 		
-		if(self.current_file==''):
-			self.menu_handler.confirm_save_changes()
-		else:
+
+		#print("run semantic")
+		
+		# if(self.current_file==''):
+		# 	self.menu_handler.confirm_save_changes()
+		# else:
+			
 			try:
 			# Crear una instancia de SemanticProcessor
+				self.text_semanticErrors.clear()
+				print("semantic")
 				processor = semantic.SemanticProcessor()
-
+				
 		
 			except Exception as e:
 				print(e)
 
 			try:
 				self.output_semamtic()
+				self.output_hash_table()
 				with open("src/assets/errores_semanticos.txt", "r") as file_error:
 					self.output_semantic_error(file_error.read())
 					file_error.close()
 			except Exception as e:
 				print(e)
+
+				
 		
 	def run_syntax(self):
 		# Limpia el contenido del QTreeView
@@ -118,7 +126,7 @@ class PythonIDE(QMainWindow):
 		if self.text_editor.toPlainText() == "Escribe aquí...":
 			# Limpiar el texto cuando el usuario comienza a escribir
 			self.text_editor.clear()
-   
+	
 	def setupEditor(self):
 		layout = QVBoxLayout(self)
 		layout.addWidget(self.text_editor)
@@ -166,6 +174,16 @@ class PythonIDE(QMainWindow):
 		self.text_semanticErrors.setPlainText(out)
 		index = self.errors_widget.indexOf(self.text_semanticErrors)
 		self.errors_widget.setCurrentIndex(index)
+
+		
+
+	
+	def output_hash_table(self):
+		"""AI is creating summary for output_hash_table
+		creear un instancia de la clase hashtable en el widget text_hashTabOutput ambos son QTableWidget
+		"""
+		HashTable.SymbolTableWidget(file_path="src/assets/tabla_simbolos.txt", table_widget=self.text_hashTabOutput)
+		
 
 		
 	def update_line_column_info(self):
