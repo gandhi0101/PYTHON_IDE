@@ -1,28 +1,7 @@
 from math import pow  # Import pow function for exponentiation
-class Token:
-	def __init__(self, token_type, value, line_no = None):
-		self.token_type = token_type
-		self.value = value
-		self.line_no = line_no
+from tabulate import tabulate
+import structures
 
-
-class Node:
-	def __init__(self, value, line_no=None, children=None, val = None , type = None):
-		#value es el token
-		self.value = value
-		self.line_no = line_no
-		self.type = type
-		self.val = val
-		self.parent = None  # Atributo para rastrear el padre del nodo en el arbol
-		self.children = children or []
-
-	def add_child(self, node):
-		node.parent = self
-		self.children.append(node)
-
-	def __repr__(self):
-		return f"Node(value={self.value}, type={self.type}, val={self.val}, line_no={self.line_no})"
-		
 
 class Parser:
 	def __init__(self, tokens):
@@ -40,22 +19,33 @@ class Parser:
 			self.current_token = None
 
 	def match(self, token_type):
+		"""
+		Checks if the current token matches the expected token type. If they match,
+		advances to the next token. If they don't match, adds an error message to the
+		errors list and advances to the next token.
+
+		Parameters:
+		token_type (str): The expected token type.
+
+		Returns:
+		None
+		"""
 		if self.current_token and self.current_token.token_type == token_type:
 			self.advance()
 		else:
-			expected_token = token_type if token_type else "fin de entrada"
+			expected_token = token_type if token_type else "end of input"
 			found_token = (
 				self.current_token.token_type
 				if self.current_token
-				else "fin de entrada"
+				else "end of input"
 			)
 			self.errors.append(
-				f"Se esperaba {expected_token}, se encontro {found_token}"
+				f"Expected {expected_token}, found {found_token}"
 			)
 			self.advance()
 
 	def program(self):
-		root = Node("Programa")
+		root = structures.Node("Programa")
 		self.match("main")
 		self.match("{")
 		root.add_child(self.stmts())
@@ -63,7 +53,7 @@ class Parser:
 		return root
 
 	def stmts(self):
-		root = Node("Sentencias")
+		root = structures.Node("Sentencias")
 		if self.current_token and self.current_token.token_type in [
 			"int",
 			"float",
@@ -86,7 +76,7 @@ class Parser:
 		return root
 
 	def do_while_stmt(self):
-		root = Node("SentenciaDo")
+		root = structures.Node("SentenciaDo")
 		self.match("do")
 		root.add_child(self.stmt())  
 		while self.current_token and self.current_token.token_type != "until":
@@ -99,36 +89,42 @@ class Parser:
 		return root
 
 	def stmt(self):
-		if self.current_token and self.current_token.token_type == "int":
-			#root = Node("DeclaracionInt")
+		
+
+		if  self.current_token.token_type == "int":
+			#root = structures.Node("DeclaracionInt")
 			#self.match("int")
 
 			#root.add_child(self.idList())
 			root = self.idListInt()
 			#self.match(";")
-		elif self.current_token and self.current_token.token_type == "do":
+		elif  self.current_token.token_type == "do":
 			root = self.do_while_stmt()
-		elif self.current_token and self.current_token.token_type == "float":
-			#root = Node("DeclaracionFloat")
+		elif  self.current_token.token_type == "float":
+			#root = structures.Node("DeclaracionFloat")
 			#self.match("float")
 			
 			#root.add_child(self.idList())
 			root = self.idListFloat()
 			#self.match(";")
-		elif self.current_token and self.current_token.token_type == "id":
-			root = Node("Asignacion")
-			id_node = Node(self.current_token.value, line_no=self.current_token.line_no, type = self.current_token.token_type, val = 0)
+		elif  self.current_token.token_type == "id":
+
+			root = structures.Node("Asignacion", self.current_token.line_no)
+			id_node =structures.Node(self.current_token.value, self.current_token.line_no)
+			id_node.identificator = True
 			self.match("id")
 			root.add_child(id_node)
-			if self.current_token and self.current_token.token_type in ["++", "--"]:
+			if self.current_token.token_type in ["++", "--"]:
 				op_node = None
-				if(self.current_token.token_type =="++"):
-					op_node = Node("++")
-				else:   op_node = Node("--")
-				id_node.add_child(op_node)
+				if self.current_token.token_type == "++":
+					op_node =structures.Node("+")
+				else:
+					op_node =structures.Node("-")
+				op_node.add_child(id_node)
 				self.match(self.current_token.token_type)
 				op_node.add_child(Node("1"))
-			elif self.current_token and self.current_token.token_type in [
+				root.add_child(op_node)
+			elif  self.current_token.token_type in [
 				"<",
 				">",
 				"<=",
@@ -136,48 +132,47 @@ class Parser:
 				"==",
 				"!=",
 			]:
-				op_node = Node(self.current_token.value)
+				op_node =structures.Node(self.current_token.value, self.current_token.line_no)
 				self.match(self.current_token.token_type)
 				if self.current_token and self.current_token.token_type in [
 					"id",
 					"num",
 				]:
-					operand_node = Node(self.current_token.value, line_no=self.current_token.line_no)
-					id_node.add_child(operand_node)
+					operand_node = structures.Node(
+						self.current_token.value, self.current_token.line_no
+					)
+					if self.current_token and self.current_token.token_type == "id":
+						operand_node.identificator = True
+					root.add_child(operand_node)
 					self.match(self.current_token.token_type)
-
 			else:
 				self.match("=")
-				root.val = self.current_token.value
-				#en el hijo (lista hijo ) hacer un recoriddo de la lista para asignar los valores
-				if(len(root.children)== 1):
-					root.children[0].val = root.val
 				expr_node = self.expr()
 				root.add_child(expr_node)
 			self.match(";")
-		elif self.current_token and self.current_token.token_type == "if":
-			root = Node("SentenciaIf")
+		elif  self.current_token.token_type == "if":
+			root = structures.Node("SentenciaIf")
 			self.match("if")
-			if self.current_token and self.current_token.token_type == "(":
+			if   self.current_token.token_type == "(":
 				self.match("(")
 				expr_node = self.expr()
 				root.add_child(expr_node)
 				self.match(")")
 			stmt_node = self.stmts()
-			if self.current_token and self.current_token.token_type == "{":
+			if   self.current_token.token_type == "{":
 				self.match("{")
 				root.add_child(stmt_node)
 				self.match("}")
 			else:
 				root.add_child(stmt_node)
-			if self.current_token and self.current_token.token_type == "else":
+			if   self.current_token.token_type == "else":
 				self.match("else")
 				else_stmt_node = self.stmts()
 				root.add_child(else_stmt_node)
 			self.match("end")
 
-		elif self.current_token and self.current_token.token_type == "while":
-			root = Node("SentenciaWhile")
+		elif   self.current_token.token_type == "while":
+			root = structures.Node("SentenciaWhile")
 			self.match("while")
 			self.match("(")
 			expr_node = self.expr()
@@ -185,23 +180,23 @@ class Parser:
 			self.match(")")
 			stmt_node = self.stmt()
 			root.add_child(stmt_node)
-		elif self.current_token and self.current_token.token_type == "{":
-			root = Node("Bloque")
+		elif self.current_token.token_type == "{":
+			root = structures.Node("Bloque")
 			self.match("{")
 			root.add_child(self.stmts())
 			self.match("}")
 		elif self.current_token and self.current_token.token_type == "cin":
-			root = Node("SentenciaInput")
+			root = structures.Node("SentenciaInput")
 			self.match("cin")
 			root.add_child(self.idList())
 			self.match(";")
 		elif self.current_token and self.current_token.token_type == "cout":
-			root = Node("SentenciaOutput")
+			root = structures.Node("SentenciaOutput")
 			self.match("cout")
 			root.add_child(self.expr())
 			self.match(";")
 		else:
-			root = Node("Error")
+			root = structures.Node("Error")
 			error_token = self.current_token.value if self.current_token else None
 			if error_token:
 				self.errors.append(f"Sentencia invalida: {error_token}")
@@ -209,11 +204,12 @@ class Parser:
 		return root
 
 	def idListInt(self):
-		root = Node("DeclaracionInt")
+		root = structures.Node("DeclaracionInt", type="int")
 		self.advance()
+		self.current_token.token_type = "int"
 		while self.current_token  and  self.current_token.value !=";":
-			#self.match("id")
-			id_node = Node(self.current_token.value)
+			#self.match("int")
+			id_node = structures.Node(self.current_token.value, type= 'int', line_no= self.current_token.line_no)
 			root.add_child(id_node)
 			self.advance()
 			if self.current_token and self.current_token.value == ",":
@@ -225,11 +221,11 @@ class Parser:
 		return root
 	
 	def idListFloat(self):
-		root = Node("DeclaracionFloat")
+		root = structures.Node("DeclaracionFloat")
 		self.advance()
 		while self.current_token  and  self.current_token.value !=";":
 			#self.match("id")
-			id_node = Node(self.current_token.value)
+			id_node = structures.Node(self.current_token.value , type = "float", line_no= self.current_token.line_no)
 			root.add_child(id_node)
 			self.advance()
 			if self.current_token and self.current_token.value == ",":
@@ -242,13 +238,13 @@ class Parser:
 	
 
 	def idList(self):
-		root = Node("IdList")
-		id_node = Node(self.current_token.value, line_no=self.current_token.line_no)
+		root = structures.Node("IdList")
+		id_node = structures.Node(self.current_token.value, line_no=self.current_token.line_no)
 		root.add_child(id_node)
 		self.match("id")
 		while self.current_token and self.current_token.value == "," and self.current_token.value != ";":
 			self.match(",")
-			id_node = Node(self.current_token.value, line_no=self.current_token.line_no)
+			id_node = structures.Node(self.current_token.value, line_no=self.current_token.line_no)
 			root.add_child(id_node)
 			self.match("id")
 
@@ -257,7 +253,7 @@ class Parser:
 	def expr(self):
 		root = self.term()
 		while self.current_token and self.current_token.token_type in ["+", "-"]:
-			op_node = Node(self.current_token.value)
+			op_node = structures.Node(self.current_token.value)
 			self.match(self.current_token.token_type)
 			op_node.add_child(root)
 			root = op_node
@@ -268,7 +264,7 @@ class Parser:
 	def term(self):
 		root = self.factor()
 		while self.current_token and self.current_token.token_type in ["*", "/"]:
-			op_node = Node(self.current_token.value)
+			op_node = structures.Node(self.current_token.value)
 			self.match(self.current_token.token_type)
 			op_node.add_child(root)
 			root = op_node
@@ -278,15 +274,14 @@ class Parser:
 
 	def factor(self):
 		root = self.primary()
-		while self.current_token and self.current_token.token_type in [
-			"<",
+		while self.current_token and self.current_token.token_type in ["<",
 			">",
 			"<=",
 			">=",
 			"==",
 			"!=",
 		]:
-			op_node = Node(self.current_token.value)
+			op_node = structures.Node(self.current_token.value)
 			self.match(self.current_token.token_type)
 			op_node.add_child(root)
 			root = op_node
@@ -300,19 +295,19 @@ class Parser:
 			root = self.expr()
 			self.match(")")
 		elif self.current_token and self.current_token.token_type == "num":
-			root = Node(self.current_token.value, line_no=self.current_token.line_no, val=self.current_token.value, type=self.current_token.token_type)
+			root = structures.Node(self.current_token.value, line_no=self.current_token.line_no, val=self.current_token.value, type=self.current_token.token_type, num_type= self.current_token.num_type)
 			self.match(self.current_token.token_type)
 
 		elif self.current_token and self.current_token.token_type == "id":
 
-			root = Node(self.current_token.value, 
+			root = structures.Node(self.current_token.value, 
 			   line_no=self.current_token.line_no, 
 			   type = self.current_token.token_type
 			   ) 
 			self.match(self.current_token.token_type)
 
 		else:
-			root = Node("Error")
+			root = structures.Node("Error", line_no=self.current_token.line_no, val= self.current_token.value)
 			error_token = self.current_token.value if self.current_token else None
 			self.errors.append(f"Factor invalido: {error_token}")
 			self.advance()
@@ -328,12 +323,14 @@ class Parser:
 
 
 class SemanticAnalyzer:
+
 	def __init__(self, ast):
+		self.loc = -1
 		self.ast = ast
 		self.errors = []
 		self.symbol_table = {}
 		self.memoria = []
-
+	
 	def analyze(self, ast):
 		self.visit_node(ast)
 
@@ -346,79 +343,156 @@ class SemanticAnalyzer:
 				self.handle_float_declaration(node)
 			elif node.value == "Asignacion":
 				self.handle_assignment(node, current_node = node.children)
-			#print(f"node: {node.value}, valor: {node.val} , parent: {node.parent.value}")
+			#print(f": {node.value}, valor: {node.val},type:{node.type} , parent: {node.parent.value}")
 
 		for child in node.children:
 			self.visit_node(child)
 
 	def handle_int_declaration(self, node):
-		for var_node in node.children:  # Puede haber múltiples variables declaradas en la misma línea
+		for var_node in node.children:  # Puede haber múltiples variables declaradas en la misma linea
+			self.loc+=1
 			variable_name = var_node.value
 			if variable_name in self.symbol_table:
 				self.errors.append(f"Duplicado: Variable '{variable_name}' ya declarada")
+				self.symbol_table[variable_name+" Duplicado"] = {
+					"type": "int...",
+					"value": None,
+					"loc": self.loc,
+					"line_numbers":[self.symbol_table[variable_name]['line_numbers'],var_node.line_no],
+				}
 			else:
-				# Guardar la variable en la tabla de símbolos
+				# Guardar la variable en la tabla de simbolos
 				self.symbol_table[variable_name] = {
 					"type": "int",
 					"value": None,
-					"loc": "default_location",
+					"loc": self.loc,
 					"line_numbers": [var_node.line_no],
 				}
 	
 
 	def handle_float_declaration(self, node):
 		for var_node in node.children:
+			self.loc+=1
 			variable_name = var_node.value
 			if variable_name in self.symbol_table:
 				self.errors.append(f"Duplicado: Variable '{variable_name}' ya declarada")
+				self.symbol_table[variable_name+" Duplicado"] = {
+					"type": "Float...Error",
+					"value": None,
+					"loc": self.loc,
+					"line_numbers":[self.symbol_table[variable_name]['line_numbers'],var_node.line_no],
+				}
 			else:
-				# Guardar la variable en la tabla de símbolos
+				# Guardar la variable en la tabla de simbolos
 				self.symbol_table[variable_name] = {
 					"type": "float",
 					"value": None,
-					"loc": "default_location",
+					"loc": self.loc,
 					"line_numbers": [var_node.line_no],
 				}
 
 	def handle_assignment(self, node, current_node):
-
+	
 		variable_name = node.children[0].value
-		expr_value = node.children[1].value
-
+		
 		if variable_name not in self.symbol_table:
-			self.errors.append(f"No declarado: Variable '{variable_name}' no está declarada.")
-			return
-		
-		symbol_info = self.symbol_table[variable_name]
-		# Validar tipos antes de la asignación
-		
-		if symbol_info["type"] == "int" and isinstance(expr_value, float):
-			self.errors.append(f"Error de tipo: No se puede asignar un valor flotante a la variable entera '{variable_name}'")
-		# elif symbol_info["type"] == "float" and not isinstance(expr_value, (float, int)):
-		# 	self.errors.append(f"Error de tipo: No se puede asignar un valor no numérico a la variable flotante '{variable_name}'")
+			self.errors.append(
+				f"Error en la línea {node.line_no}: Variable '{variable_name}' no declarada."
+			)
 		else:
-			# Asignar el valor a la variable si todo es correcto
-			symbol_info["value"] = expr_value
+			
+			
+			node.children[0].type = self.symbol_table[variable_name]['type']
+			if node.children[0].type != node.children[0].type:
+					self.errors.append(
+						f"Error en la línea {node.line_no}: Tipos de datos incompatibles en la operación de igualdad."
+			   			 )
+			#si el hijo 1 tiene mas hijos recurrir a hacer las expreciones de igual manera  recurrir y asignarle el valor del hijo 1 al 0 y de esta manera hacerlo recursivo
+
+			self.evaluate_expression(node)
+
+			self.symbol_table[variable_name]["value"] = node.children[0].val
 
 
-				
-	def evaluate_expression(self, parentnode):
-		# Recursivamente recorrer el arbol para obtener los valores actuales
-		i = 0
+	def evaluate_expression(self, node):
+		if node.type == 'id':
+			if node.val is None  :
+				node.val = self.symbol_table[node.value]["value"]
+				return
+		if node.children[0].type == 'id':
+			if node.children[0].val is None:
+				node.children[0].val = self.symbol_table[node.children[0].value]["value"]
 		
-		if isinstance(parentnode, Node):
-			#print(f"Visitando nodo: {parentnode.value}")
-			for child in parentnode.children:
-				if(child.value == "DeclaracionInt"):
-					self.memoria.append(child.children[0].value)
-				# elif(child.parent.value == 'Asignacion' and child.type == 'id'):
-				# 	lista = self.memoria
-				# 	self.memoria = [{child.value: child.childre} if v in valores_objetivo else {v: None} for v in valores]
-					
-				# self.evaluate_expression(child)
-		else:
-			#print(f"Visitando nodo: {parentnode[0].value}")
-			self.evaluate_expression(parentnode[0])
+		if node.children[1].type == 'id':
+			if node.children[1].val is None:
+				node.children[1].val = self.symbol_table[node.children[1].value]["value"]
+		operators = {
+			'*',
+			'/',
+			'+',
+			'-',
+			'^',
+			'%',
+		}
+		# if len(node.children) == 0:
+		# 	self.errors.append(f"Error en la línea {node.line_no}: asignacion incorrecta")
+		# 	return
+			
+		if len (node.children[0].children) != 0:
+			self.evaluate_expression(node.children[0])
+
+		if len (node.children[1].children) != 0:
+			self.evaluate_expression(node.children[1])
+			
+		#validar si se declaro en self.memory y asignar el type en num_type 
+		if node.children[0].type == 'id':
+				node.children[0].num_type = self.symbol_table[node.children[0].value]['type']
+		if node.children[1].type == 'id' :	
+				node.children[1].num_type = self.symbol_table[node.children[1].value]['type']
+		
+		if node.value in operators:
+			self.calculate(node.children, node.value, node)
+		else: # lo mas seguro es que sea un igual  por lo tanto solo se pasa el valor 
+			node.val = node.children[1].val
+			node.children[0].val= node.val
+			
+
+
+
+	
+
+	def calculate(self, children, operation, node):
+		#conver to str to num 
+		if children[0].num_type == 'float':
+			children[0].val = float(children[0].val)
+		elif children[0].num_type == 'int':
+			children[0].val = int(children[0].val)
+		if children[1].num_type == 'float':
+			children[1].val = float(children[1].val)
+		elif children[1].num_type == 'int':
+			children[1].val = int(children[1].val)
+
+		if operation == '*':
+			node.val = children[0].val * children[1].val
+		elif operation == '/':
+			if children[1].val == 0:
+				self.errors.append("Error en la línea: Division por cero")
+				return 
+			node.val = children[0].val / children[1].val
+		elif operation == '+':
+			node.val = children[0].val + children[1].val
+		elif operation == '-':
+			node.val = children[0].val - children[1].val
+		elif operation == '^':
+			node.val = children[0].val ** children[1].val
+		elif operation == '%':
+			if children[1].val == 0:
+				self.errors.append("Error en la línea: Division por cero")
+				return None
+			node.val = children[0].val % children[1].val
+
+
+		
 				
 
 
@@ -434,23 +508,29 @@ class SemanticProcessor:
 		token_list = []
 
 		for line in lines:
+			num_type = None
 			line = line.strip()
 			if line:
 				token_parts = line.split("--*")
 				if token_parts[1].strip() == "identificador":
 					token_type = "id"
 					value = token_parts[0].strip()
+
 				elif token_parts[1].strip() == "flotante":
 					token_type = "num"
+					num_type =  "float"
 					value = token_parts[0].strip()
 				elif token_parts[1].strip() == "entero":
 					token_type = "num"
+					num_type =  "int"
 					value = token_parts[0].strip()
 				else:
 					token_type = token_parts[0].strip()
 					value = token_parts[0].strip()
+					
 				line_no = token_parts[2].strip()
-				token = Token(token_type, value, line_no)
+
+				token = structures.Token(token_type, value, line_no, num_type=num_type)
 				token_list.append(token)
 
 	
@@ -605,15 +685,20 @@ class SemanticProcessor:
 			
 
 			if (node.line_no != None):				
-				value_str = f"{node.value} ( Lanea {node.line_no})"
+				value_str = f"{node.value} ( Linea {node.line_no})"
 				if hasattr(node, "type"):
+					
 					value_str += f" [Tipo: {node.type}]"
+
 				if hasattr(node, "val"):
+
 					self.update_Node_memoria(node)
-					if (node.val == node.value and node.type == 'id'):
-						value_str 
-					else:
-						value_str += f" [Valor: {node.val}]"
+					if node.val!=None:
+						if (node.val == node.value and node.type == 'id'):
+							value_str 
+						else:
+							
+							value_str += f" [Valor: {node.val}]"
 				output.write(f"{indent}{value_str}\n")
 			else:
 				value_str = f"{node.value}"
@@ -621,6 +706,7 @@ class SemanticProcessor:
 					value_str 
 				if hasattr(node, "val"):
 					#asignacion cambia
+					
 					if node.value == 'Asignacion':
 						node.val = node.children[1].val
 
@@ -653,14 +739,19 @@ class SemanticProcessor:
 
 	# Funcion para crear un archivo de texto para la tabla de sambolos
 	def create_symbol_table_text(self, symbol_table, filename):
+		stock_data = []
 		try:
 			with open(filename, "w") as file:
-				file.write("Nombre Variable\tTipo\tValor\tRegistro (loc)\tNameros de lanea\n")
+				headers = ["Nombre Variable","Tipo","Valor","Registro (loc)","Numeros de lines" ]
+				
 				for variable, data in symbol_table.items():
 					line_no_numbers = ", ".join(map(str, data['line_numbers']))
-					file.write(f"{variable}\t{data['type']}\t{data['value']}\t{data['loc']}\t{line_no_numbers}\n")
+					stock_data.append([variable, data['type'], data['value'], data['loc'],line_no_numbers])
+					#file.write(f"		{variable} 			| 	{data['type']}	 |  {data['value']}		  |{data['loc']}		|{line_no_numbers}\n")
+				table = tabulate(stock_data, headers, tablefmt="grid")
+				file.write(table)
 		except Exception as e:
-			print(f"Error al crear el archivo de tabla de sambolos: {e}")
+			print(f"Error al crear el archivo de tabla de simbolos: {e}")
 	
 
 

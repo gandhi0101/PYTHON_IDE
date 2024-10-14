@@ -1,24 +1,23 @@
-class Token:
-	def __init__(self, token_type, value, line_no = None):
-		self.token_type = token_type
-		self.value = value
-		self.line_no = line_no
-
-
 class Node:
-	def __init__(self, value, line_no=None, children=None, val = None , type = None):
-		#value es el token
-		self.value = value
-		self.line_no = line_no
-		self.type = type
-		self.val = val
-		self.parent = None  # Atributo para rastrear el padre del nodo en el arbol
-		self.children = children or []
+        def __init__(self, value, line_no=None, type=None, val=None, num_type=None):
+            self.value = value
+            self.line_no = line_no
+            self.type = type
+            self.val = val
+            self.num_type = num_type
+            self.children = []
+            self.parent = None
+            self.siblings = []
 
-	def add_child(self, node):
-		node.parent = self
-		self.children.append(node)
+        def add_child(self, child):
+            child.parent = self
+            self.children.append(child)
+            if len(self.children) > 1:
+                self.children[-1].siblings = self.children[:-1]
 
-	def __repr__(self):
-		return f"Node(value={self.value}, type={self.type}, val={self.val}, line_no={self.line_no})"
-		
+class Token:
+        def __init__(self, token_type, value, line_no, num_type=None):
+            self.token_type = token_type
+            self.value = value
+            self.line_no = line_no
+            self.num_type = num_type
