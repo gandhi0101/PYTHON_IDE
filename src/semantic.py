@@ -79,9 +79,10 @@ class Parser:
 		root = structures.Node("SentenciaDo")
 		self.match("do")
 		root.add_child(self.stmt())  
-		while self.current_token and self.current_token.token_type != "until":
+		while self.current_token and self.current_token.token_type != "while":
 			root.add_child(self.stmt())
-		self.match("until")
+		
+		self.match("while")
 		self.match("(")
 		root.add_child(self.expr())
 		self.match(")")
@@ -122,7 +123,7 @@ class Parser:
 					op_node =structures.Node("-")
 				op_node.add_child(id_node)
 				self.match(self.current_token.token_type)
-				op_node.add_child(Node("1"))
+				op_node.add_child(structures.Node("1",line_no=self.current_token.line_no, num_type='int',val=1,type='num' ))
 				root.add_child(op_node)
 			elif  self.current_token.token_type in [
 				"<",
@@ -153,23 +154,24 @@ class Parser:
 		elif  self.current_token.token_type == "if":
 			root = structures.Node("SentenciaIf")
 			self.match("if")
-			if   self.current_token.token_type == "(":
-				self.match("(")
-				expr_node = self.expr()
-				root.add_child(expr_node)
-				self.match(")")
+
+			self.match("(")
+			expr_node = self.expr()
+			root.add_child(expr_node)
+			self.match(")")
+			self.match("{")
 			stmt_node = self.stmts()
-			if   self.current_token.token_type == "{":
+			root.add_child(stmt_node)
+			self.match("}")
+
+			if   self.current_token.token_type == "else":
+				self.match("else")
 				self.match("{")
+				stmt_node = self.stmts()
 				root.add_child(stmt_node)
 				self.match("}")
 			else:
 				root.add_child(stmt_node)
-			if   self.current_token.token_type == "else":
-				self.match("else")
-				else_stmt_node = self.stmts()
-				root.add_child(else_stmt_node)
-			self.match("end")
 
 		elif   self.current_token.token_type == "while":
 			root = structures.Node("SentenciaWhile")
@@ -185,16 +187,17 @@ class Parser:
 			self.match("{")
 			root.add_child(self.stmts())
 			self.match("}")
-		elif self.current_token and self.current_token.token_type == "cin":
+		elif  self.current_token.token_type == "cin":
 			root = structures.Node("SentenciaInput")
 			self.match("cin")
 			root.add_child(self.idList())
 			self.match(";")
-		elif self.current_token and self.current_token.token_type == "cout":
+		elif self.current_token.token_type == "cout":
 			root = structures.Node("SentenciaOutput")
 			self.match("cout")
 			root.add_child(self.expr())
 			self.match(";")
+		
 		else:
 			root = structures.Node("Error")
 			error_token = self.current_token.value if self.current_token else None
@@ -209,7 +212,9 @@ class Parser:
 		self.current_token.token_type = "int"
 		while self.current_token  and  self.current_token.value !=";":
 			#self.match("int")
-			id_node = structures.Node(self.current_token.value, type= 'int', line_no= self.current_token.line_no)
+			if self.current_token.value == "=":
+				
+			id_node = structures.Node(self.current_token.value, type='id', num_type= 'int', line_no= self.current_token.line_no)
 			root.add_child(id_node)
 			self.advance()
 			if self.current_token and self.current_token.value == ",":
@@ -225,7 +230,7 @@ class Parser:
 		self.advance()
 		while self.current_token  and  self.current_token.value !=";":
 			#self.match("id")
-			id_node = structures.Node(self.current_token.value , type = "float", line_no= self.current_token.line_no)
+			id_node = structures.Node(self.current_token.value ,type='id' ,num_type = "float", line_no= self.current_token.line_no)
 			root.add_child(id_node)
 			self.advance()
 			if self.current_token and self.current_token.value == ",":
@@ -281,7 +286,7 @@ class Parser:
 			"==",
 			"!=",
 		]:
-			op_node = structures.Node(self.current_token.value)
+			op_node = structures.Node(self.current_token.value,type= 'comparador')
 			self.match(self.current_token.token_type)
 			op_node.add_child(root)
 			root = op_node
@@ -299,15 +304,20 @@ class Parser:
 			self.match(self.current_token.token_type)
 
 		elif self.current_token and self.current_token.token_type == "id":
+			
 
 			root = structures.Node(self.current_token.value, 
 			   line_no=self.current_token.line_no, 
-			   type = self.current_token.token_type
+			   type = self.current_token.token_type,
+			   num_type= self.current_token.num_type
 			   ) 
 			self.match(self.current_token.token_type)
 
 		else:
-			root = structures.Node("Error", line_no=self.current_token.line_no, val= self.current_token.value)
+			if self.current_token is not None:
+				root = structures.Node("Error", line_no=self.current_token.line_no, val= self.current_token.value)
+			else:
+				root = structures.Node("Error")
 			error_token = self.current_token.value if self.current_token else None
 			self.errors.append(f"Factor invalido: {error_token}")
 			self.advance()
@@ -316,7 +326,7 @@ class Parser:
 	def parse(self):
 		ast = self.program()
 		if self.errors:
-			print("Se encontraron errores de sintaxis. La compilacion ha fallado.")
+			print(f"Se encontraron errores de sintaxis. La compilacion ha fallado.{self.errors}")
 		else:
 			print("La sintaxis es correcta. La compilacion ha sido exitosa.")
 		return ast
@@ -343,10 +353,50 @@ class SemanticAnalyzer:
 				self.handle_float_declaration(node)
 			elif node.value == "Asignacion":
 				self.handle_assignment(node, current_node = node.children)
+			elif node.value == "SentenciaIf":
+				self.handle_if(node)
+			elif node.value == "SentenciaWhile":
+				self.handle_while(node)
+			elif node.value == "SentenciaDo":
+				self.handle_do(node)
+
+			
 			#print(f": {node.value}, valor: {node.val},type:{node.type} , parent: {node.parent.value}")
 
 		for child in node.children:
 			self.visit_node(child)
+	def handle_if(self, node):
+		for child in node.children:
+			if child.type == "id":
+				if child.value == self.symbol_table[child.value]:
+					child.type = self.symbol_table[child.value]['type']
+					child.val = self.symbol_table[child.value]['value']
+				else:
+					self.errors.append(f"Variable '{child.value}' no declarada")
+			self.evaluate_expression(child)
+	def handle_do(self, node):
+		for child in node.children:
+			if child.type == "id":
+				if child.value == self.symbol_table[child.value]:
+					child.type = self.symbol_table[child.value]['type']
+					child.val = self.symbol_table[child.value]['value']
+				else:
+					self.errors.append(f"Variable '{child.value}' no declarada")
+			self.evaluate_expression(child)
+
+	def handle_while(self, node):
+		for child in node.children:
+
+			if child.type == "id":
+				if child.value == self.symbol_table[child.value]:
+					child.type = self.symbol_table[child.value]['type']
+					child.val = self.symbol_table[child.value]['value']
+				else:
+					self.errors.append(f"Variable '{child.value}' no declarada")
+				
+			self.evaluate_expression(child)
+
+
 
 	def handle_int_declaration(self, node):
 		for var_node in node.children:  # Puede haber múltiples variables declaradas en la misma linea
@@ -363,11 +413,13 @@ class SemanticAnalyzer:
 			else:
 				# Guardar la variable en la tabla de simbolos
 				self.symbol_table[variable_name] = {
+
 					"type": "int",
 					"value": None,
 					"loc": self.loc,
 					"line_numbers": [var_node.line_no],
 				}
+			if 
 	
 
 	def handle_float_declaration(self, node):
@@ -400,9 +452,7 @@ class SemanticAnalyzer:
 				f"Error en la línea {node.line_no}: Variable '{variable_name}' no declarada."
 			)
 		else:
-			
-			
-			node.children[0].type = self.symbol_table[variable_name]['type']
+			node.children[0].num_type = self.symbol_table[variable_name]['type']
 			if node.children[0].type != node.children[0].type:
 					self.errors.append(
 						f"Error en la línea {node.line_no}: Tipos de datos incompatibles en la operación de igualdad."
@@ -410,22 +460,26 @@ class SemanticAnalyzer:
 			#si el hijo 1 tiene mas hijos recurrir a hacer las expreciones de igual manera  recurrir y asignarle el valor del hijo 1 al 0 y de esta manera hacerlo recursivo
 
 			self.evaluate_expression(node)
+			if node.children[0].type == 'int':
+				#i es float se corta a entero 
 
-			self.symbol_table[variable_name]["value"] = node.children[0].val
+				if node.children[1].num_type == 'float' and node.children[1].type == 'num':
+					node.children[1].val = float(node.children[1].val)
+
+				node.children[0].val = int(node.children[1].val)
+				node.val = node.children[0].val
+			else:
+				if 	self.symbol_table[variable_name]['type'] == 'int' :
+					self.symbol_table[variable_name]["value"] =int( node.children[0].val)
+				else:
+					self.symbol_table[variable_name]["value"] = node.children[0].val
+                    
 
 
 	def evaluate_expression(self, node):
-		if node.type == 'id':
-			if node.val is None  :
-				node.val = self.symbol_table[node.value]["value"]
-				return
-		if node.children[0].type == 'id':
-			if node.children[0].val is None:
-				node.children[0].val = self.symbol_table[node.children[0].value]["value"]
+
 		
-		if node.children[1].type == 'id':
-			if node.children[1].val is None:
-				node.children[1].val = self.symbol_table[node.children[1].value]["value"]
+		
 		operators = {
 			'*',
 			'/',
@@ -434,44 +488,329 @@ class SemanticAnalyzer:
 			'^',
 			'%',
 		}
+		#Operadores logicos
+		logicOperators = {
+			'&&',
+			'||',
+			'!',
+		}
+		#Operadores relacionales
+		relationalOperators = {
+			'==',
+			'!=',
+			'<',
+			'>',
+			'<=',
+			'>=',
+		}
+		#Operadores de incremento y decremento
+		incrementDecrementOperators = {
+			'++',
+			'--',
+		}
+	
+		#Operadores de bitwise
+		bitwiseOperators = {
+			'|',
+			'&',
+			'^',
+			'<<',
+			'>>',
+		}
+		#Operadores de shift
+		shiftOperators = {
+			'<<',
+			'>>',
+		}
+		
 		# if len(node.children) == 0:
 		# 	self.errors.append(f"Error en la línea {node.line_no}: asignacion incorrecta")
 		# 	return
+		if node.type == 'id':
+			if node.val is None  :
+				node.val = self.symbol_table[node.value]["value"]
+				return
+		if len(node.children) >1:
+			if node.children[0].type == 'id':
+				if node.children[0].val is None:
+					node.children[0].val = self.symbol_table[node.children[0].value]["value"]
 			
-		if len (node.children[0].children) != 0:
-			self.evaluate_expression(node.children[0])
+			if node.children[1].type == 'id':
+				if node.children[1].val is None:
+					node.children[1].val = self.symbol_table[node.children[1].value]["value"]
+		
+			if len (node.children[0].children) != 0:
+				self.evaluate_expression(node.children[0])
 
-		if len (node.children[1].children) != 0:
-			self.evaluate_expression(node.children[1])
+			if len (node.children[1].children) != 0:
+				self.evaluate_expression(node.children[1])
 			
 		#validar si se declaro en self.memory y asignar el type en num_type 
-		if node.children[0].type == 'id':
+			if node.children[0].type == 'id':
 				node.children[0].num_type = self.symbol_table[node.children[0].value]['type']
-		if node.children[1].type == 'id' :	
+			if node.children[1].type == 'id' :	
 				node.children[1].num_type = self.symbol_table[node.children[1].value]['type']
 		
-		if node.value in operators:
-			self.calculate(node.children, node.value, node)
-		else: # lo mas seguro es que sea un igual  por lo tanto solo se pasa el valor 
-			node.val = node.children[1].val
-			node.children[0].val= node.val
+			if node.value in operators:
+				self.calculate(node.children, node.value, node)
+			elif node.value in logicOperators:
+				self.calculate_logic(node.children, node.value, node)
+
+			elif node.value in relationalOperators:
+				self.calculate_relational(node.children, node.value, node)
+			elif node.value in incrementDecrementOperators:
+				self.calculate_increment_decrement(node.children, node.value, node)
+			elif node.value in bitwiseOperators:
+				self.calculate_bitwise(node.children, node.value, node)
+			elif node.value in shiftOperators:
+				self.calculate_shift(node.children, node.value, node)
 			
+			else: # lo mas seguro es que sea un igual  por lo tanto solo se pasa el valor 
 
+				if node.children[1].num_type == 'int':
+					if node.children[0].val != None:
+						node.children[0].val = int(node.children[0].val)
+					
+					
 
+				if node.children[0].num_type == 'int':
+					if node.children[1].val != None:
+						node.children[1].val = int(node.children[1].val)
 
+				node.val = node.children[1].val
+				node.children[0].val= node.val
+			if node.children[0].type == 'id':
+				self.symbol_table[node.children[0].value]['value'] = node.children[0].val
+			
 	
-
-	def calculate(self, children, operation, node):
-		#conver to str to num 
+	def calculate_increment_decrement(self, children, operation, node):
 		if children[0].num_type == 'float':
 			children[0].val = float(children[0].val)
 		elif children[0].num_type == 'int':
 			children[0].val = int(children[0].val)
+		elif children[0].type == 'num':
+			if children[0].num_type == 'float':
+				children[0].val = float(children[0].value)
+			elif children[0].type == 'int':
+				children[0].val = int(children[0].value)
 		if children[1].num_type == 'float':
 			children[1].val = float(children[1].val)
 		elif children[1].num_type == 'int':
 			children[1].val = int(children[1].val)
+		elif children[1].type == 'num':
+			if children[1].num_type == 'int':
+				children[1].val = int(children[1].value)
+			elif children[1].num_type == 'float':
+				children[1].val = float(children[1].value)	
+		if node.children[0].val == None:
+			children[0].val= 0
+		if node.children[1].val == None:
+			children[1].val= 0
+		
+		if operation == '++':
+			children[0].val += 1
+			node.val = children[0].val
+			node.num_type = children[0].num_type
+			node.children[0].num_type = 'int'
+		elif operation == '--':
+			children[0].val -= 1
+			node.val = children[0].val
+			node.num_type = children[0].num_type
+			node.children[0].num_type = 'int'
+		else:
+			self.errors.append(f"Error en la línea {node.line_no}: Operador de incremento/decremento invalido")
+			return
+		
+	def calculate_bitwise(self, children, operation, node):
+		if children[0].num_type == 'float':
+			children[0].val = float(children[0].val)
+		elif children[0].num_type == 'int':
+			children[0].val = int(children[0].val)
+		elif children[0].type == 'num':
+			if children[0].num_type == 'float':
+				children[0].val = float(children[0].value)
+			elif children[0].type == 'int':
+				children[0].val = int(children[0].value)
+		if children[1].num_type == 'float':
+			children[1].val = float(children[1].val)
+		elif children[1].num_type == 'int':
+			children[1].val = int(children[1].val)
+		elif children[1].type == 'num':
+			if children[1].num_type == 'int':
+				children[1].val = int(children[1].value)
+			elif children[1].num_type == 'float':
+				children[1].val = float(children[1].value)	
+		if node.children[0].val == None:
+			children[0].val= 0
+		if node.children[1].val == None:
+			children[1].val= 0
+		
+		if operation == '|':
+			node.val = children[0].val | children[1].val
+			node.num_type = children[0].num_type
+		elif operation == '&':
+			node.val = children[0].val & children[1].val
+			node.num_type = children[0].num_type
+		elif operation == '^':
+			node.val = children[0].val ^ children[1].val
+			node.num_type = children[0].num_type
+		elif operation == '<<':
+			node.val = children[0].val << children[1].val
+			node.num_type = children[0].num_type
+		elif operation == '>>':
+			node.val = children[0].val >> children[1].val
+			node.num_type = children[0].num_type
+		else:
+			self.errors.append(f"Error en la línea {node.line_no}: Operador de bitwise invalido")
+			return
+	
+	def calculate_shift(self, children, operation, node):
+		if children[0].num_type == 'float':
+			children[0].val = float(children[0].val)
+		elif children[0].num_type == 'int':
+			children[0].val = int(children[0].val)
+		elif children[0].type == 'num':
+			if children[0].num_type == 'float':
+				children[0].val = float(children[0].value)
+			elif children[0].type == 'int':
+				children[0].val = int(children[0].value)
+		if children[1].num_type == 'float':
+			children[1].val = float(children[1].val)
+		elif children[1].num_type == 'int':
+			children[1].val = int(children[1].val)
+		elif children[1].type == 'num':
+			if children[1].num_type == 'int':
+				children[1].val = int(children[1].value)
+			elif children[1].num_type == 'float':
+				children[1].val = float(children[1].value)	
+		if node.children[0].val == None:
+			children[0].val= 0
+		if node.children[1].val == None:
+			children[1].val= 0
+		
+		if operation == '<<':
+			node.val = children[0].val << children[1].val
+			node.num_type = children[0].num_type
+			node.children[0].num_type = 'int'
+		elif operation == '>>':
+			node.val = children[0].val >> children[1].val
+			node.num_type = children[0].num_type
+			node.children[0].num_type = 'int'
+		else:
+			self.errors.append(f"Error en la línea {node.line_no}: Operador de shift invalido")
+			return
+			
+	
 
+
+
+
+	def calculate_logic(self, children, operation, node):
+		if children[0].num_type == 'float':
+			children[0].val = float(children[0].val)
+		elif children[0].num_type == 'int':
+			children[0].val = int(children[0].val)
+		elif children[0].type == 'num':
+			if children[0].num_type == 'float':
+				children[0].val = float(children[0].value)
+			elif children[0].type == 'int':
+				children[0].val = int(children[0].value)
+		if children[1].num_type == 'float':
+			children[1].val = float(children[1].val)
+		elif children[1].num_type == 'int':
+			children[1].val = int(children[1].val)
+		elif children[1].type == 'num':
+			if children[1].num_type == 'int':
+				children[1].val = int(children[1].value)
+			elif children[1].num_type == 'float':
+				children[1].val = float(children[1].value)	
+		if node.children[0].val == None:
+			children[0].val= 0
+		if node.children[1].val == None:
+			children[1].val= 0
+		
+		if operation == '&&':
+			node.val = children[0].val and children[1].val
+			node.num_type = children[0].num_type
+		elif operation == '||':
+			node.val = children[0].val or children[1].val
+			node.num_type = children[0].num_type
+		elif operation == '!':
+			node.val = not children[0].val
+			node.num_type = children[0].num_type
+		else:
+			self.errors.append(f"Error en la línea {node.line_no}: Operador logico invalido")
+			return
+	
+	def calculate_relational(self, children, operation, node):
+		if children[0].num_type == 'float':
+			children[0].val = float(children[0].val)
+		elif children[0].num_type == 'int':
+			children[0].val = int(children[0].val)
+		elif children[0].type == 'num':
+			if children[0].num_type == 'float':
+				children[0].val = float(children[0].value)
+			elif children[0].type == 'int':
+				children[0].val = int(children[0].value)
+		if children[1].num_type == 'float':
+			children[1].val = float(children[1].val)
+		elif children[1].num_type == 'int':
+			children[1].val = int(children[1].val)
+		elif children[1].type == 'num':
+			if children[1].num_type == 'int':
+				children[1].val = int(children[1].value)
+			elif children[1].num_type == 'float':
+				children[1].val = float(children[1].value)	
+		if node.children[0].val == None:
+			children[0].val= 0
+		if node.children[1].val == None:
+			children[1].val= 0
+		
+		if operation == '==':
+			node.val = children[0].val == children[1].val
+			node.num_type = children[0].num_type
+		elif operation == '!=':
+			node.val = children[0].val!= children[1].val
+			node.num_type = children[0].num_type
+		elif operation == '<':
+			node.val = children[0].val < children[1].val
+			node.num_type = children[0].num_type
+		elif operation == '>':
+			node.val = children[0].val > children[1].val
+			node.num_type = children[0].num_type
+		elif operation == '<=':
+			node.val = children[0].val <= children[1].val
+			node.num_type = children[0].num_type
+		elif operation == '>=':
+			node.val = children[0].val >= children[1].val
+			node.num_type = children[0].num_type
+		else:
+			self.errors.append(f"Error en la línea {node.line_no}: Operador relacional invalido")
+			return
+
+
+			
+	
+
+	def calculate(self, children, operation, node):
+
+		if children[1].num_type == 'int':
+			if children[0].val != None:
+				children[0].val = int(children[0].val)
+			
+			
+
+		if children[0].num_type == 'int':
+			if children[1].val != None:
+				children[1].val = int(children[1].val)
+			
+		
+
+		
+		if node.children[0].val == None:
+			children[0].val= 0
+		if node.children[1].val == None:
+			children[1].val= 0
 		if operation == '*':
 			node.val = children[0].val * children[1].val
 		elif operation == '/':
@@ -490,6 +829,13 @@ class SemanticAnalyzer:
 				self.errors.append("Error en la línea: Division por cero")
 				return None
 			node.val = children[0].val % children[1].val
+		else:
+			self.errors.append(f"Error en la línea {node.line_no}: Operador aritmético invalido")
+			return
+		
+		if node.type == 'id':
+			self.symbol_table[node.value]['value'] = node.val
+
 
 
 		
@@ -513,17 +859,18 @@ class SemanticProcessor:
 			if line:
 				token_parts = line.split("--*")
 				if token_parts[1].strip() == "identificador":
+					num_type = token_type
 					token_type = "id"
 					value = token_parts[0].strip()
 
 				elif token_parts[1].strip() == "flotante":
 					token_type = "num"
 					num_type =  "float"
-					value = token_parts[0].strip()
+					value = float(token_parts[0].strip())
 				elif token_parts[1].strip() == "entero":
 					token_type = "num"
 					num_type =  "int"
-					value = token_parts[0].strip()
+					value = int(token_parts[0].strip())
 				else:
 					token_type = token_parts[0].strip()
 					value = token_parts[0].strip()
@@ -638,28 +985,6 @@ class SemanticProcessor:
 			return None
 
 
-	def _convert_to_number(self, value):
-		"""
-		Converts the value to a float or int, handling potential errors.
-
-		Args:
-			value (str): The value to convert.
-
-		Returns:
-			float or int: The converted value.
-		"""
-
-		try:
-			if value is not None and value.isdigit():
-				return float(value)
-		except ValueError:
-			try:
-				return int(value)
-			except ValueError:
-				# If neither float nor int conversion succeeds, handle the error as needed
-				print(f"Error: Invalid numeric value '{value}'")
-				return None
-		# Funcion para anotar el arbol sintactico
 	def annotate_tree(self, node, level=0, output=None):
 		indent = " | " * level
 
@@ -716,7 +1041,10 @@ class SemanticProcessor:
 
 						value_str += f" [Valor: {node.val}]"
 					else:
-						value_str
+						if node.val!= None:
+							value_str += f" [Valor: {node.val}]"
+						else:
+							value_str
 				output.write(f"{indent}{value_str}\n")
 		
 						

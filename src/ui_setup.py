@@ -1,6 +1,7 @@
 import contextlib
 from io import StringIO
-from PyQt5.QtWidgets import QMainWindow,QApplication, QVBoxLayout, QTableWidget,QTableWidgetItem
+import platform
+from PyQt5.QtWidgets import QMainWindow,QApplication, QVBoxLayout, QTableWidget,QTableWidgetItem,QHeaderView
 from TreeViewSyntax import TreeViewSyntax
 from lexer import LexicalScaner
 import semantic
@@ -11,6 +12,7 @@ from code_execution import setup_editor
 from PyQt5.QtGui import QIcon
 import os
 from menu import MenuHandler
+from PyQt5 import QtMacExtras
 
 class PythonIDE(QMainWindow):
 	def __init__(self):
@@ -27,10 +29,16 @@ class PythonIDE(QMainWindow):
 		setup_bottom_widget(self)
 	
 	def setup_window(self):
+		is_mac = platform.system() == 'Darwin'
 		# Configuración de la ventana
 		self.setGeometry(100, 100, 1750, 910)
 		self.setWindowTitle('IDE Compiler Gandhi Armando Salvador')
-		self.setWindowIcon(QIcon(os.path.join('src', 'assets', 'icons', 'principal.png')))
+		if is_mac:
+			 # Nombre en el Dock
+			
+			self.setWindowIcon(QIcon('src/assets/icons/principal.png')) 
+		else: 
+			self.setWindowIcon(QIcon(os.path.join('src', 'assets', 'icons', 'principal.png')))
 	
 	def setup_menu(self):
 		# Configuración del menú
@@ -146,27 +154,45 @@ class PythonIDE(QMainWindow):
 	
 
 	def output_syntax(self ):
-		tree_view_syntax = TreeViewSyntax("src/assets/arbolSintactico.txt") 
-		self.text_syntaxOutput.setModel(tree_view_syntax.model)
+		try:
 
-		self.text_syntaxOutput.expandAll()
-		index = self.errors_widget.indexOf(self.text_syntaxOutput)
-		self.errors_widget.setCurrentIndex(index)
+			tree_view_syntax = TreeViewSyntax("src/assets/arbolSintactico.txt") 
+			self.text_syntaxOutput.setModel(tree_view_syntax.model)
+
+			self.text_syntaxOutput.expandAll()
+			index = self.errors_widget.indexOf(self.text_syntaxOutput)
+			self.errors_widget.setCurrentIndex(index)
+		except Exception as e:
+			print(f"Error while displaying syntax tree: {e}")
 
 	def output_syntax_error(self, out):
-		self.text_syntaxErrors.setPlainText(out)
-		index = self.errors_widget.indexOf(self.text_syntaxErrors)
-		self.errors_widget.setCurrentIndex(index)
+		try:
+			self.text_syntaxErrors.setPlainText(out)
+			index = self.errors_widget.indexOf(self.text_syntaxErrors)
+			self.errors_widget.setCurrentIndex(index)
+		except Exception as e:
+			print(f"Error while displaying syntax errors: {e}")
 	
 
 	def output_semamtic(self):
+		# Clear the widget before displaying new results
+		
+		self.text_semanticOutput.setModel(None)
+
 		print("output semamtic")
 		tree_view_semantic = TreeViewSyntax("src/assets/arbol_sintactico_anotado.txt") 
 		self.text_semanticOutput.setModel(tree_view_semantic.model)
-
 		self.text_semanticOutput.expandAll()
+		# # Enable horizontal scrolling
+		# self.tree_view_semantic.header().setSectionResizeMode(QHeaderView.Interactive)
+		# self.tree_view_semantic.header().setSectionResizeMode(0, QHeaderView.Interactive)
+		# self.tree_view_semantic.setColumnWidth(0, 200)  # Ancho máximo de 200 píxeles para la columna 0
+
+
+		
 		index = self.errors_widget.indexOf(self.text_semanticOutput)
 		self.errors_widget.setCurrentIndex(index)
+		
 
 
 	def output_semantic_error(self, out):

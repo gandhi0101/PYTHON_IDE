@@ -31,3 +31,4 @@ class SymbolTableWidget(QMainWindow):
                 self.table_widget.setItem(row_idx, col_idx, QTableWidgetItem(item))
 
         self.table_widget.resizeColumnsToContents()
+##divicion trunca

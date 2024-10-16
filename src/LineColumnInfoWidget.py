@@ -12,7 +12,7 @@ class LineColumnInfoWidget(QLabel):
 		super().resizeEvent(event)
 		# Obtén el ancho del texto y ajusta el ancho del widget
 		text_width = self.fontMetrics().width(self.text())
-		self.setFixedWidth(text_width + 1000)  # Agrega un espacio adicional para mayor claridad
+		self.setFixedWidth(text_width + 900)  # Agrega un espacio adicional para mayor claridad
 
 
 

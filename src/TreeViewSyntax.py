@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QVBoxLayout, QWidget
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
+from semantic import SemanticProcessor
+
 
 class TreeViewSyntax(QMainWindow):
 	def __init__(self, file_path):
@@ -10,7 +12,7 @@ class TreeViewSyntax(QMainWindow):
 		# self.central_widget = QWidget(self)
 		# self.setCentralWidget(self.central_widget)
 		# layout = QVBoxLayout(self.central_widget)
-
+		SemanticProcessor()
 		# Crear un modelo de datos personalizado
 		self.model = QStandardItemModel()
 		root_item = self.model.invisibleRootItem()

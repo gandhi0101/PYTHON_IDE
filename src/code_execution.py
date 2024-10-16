@@ -6,7 +6,7 @@ from LineColumnInfoWidget import LineColumnInfoWidget
 def setup_editor(ide):
     try:
         ide.text_editor = CodeEditor(ide)
-        ide.text_editor.setGeometry(5, 30, 900, 600)
+        ide.text_editor.setGeometry(5, 30, 850, 600)
     except Exception as e:
         print(f"Error al configurar el editor de código: {e}")
 
