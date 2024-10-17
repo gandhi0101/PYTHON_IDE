@@ -212,8 +212,6 @@ class Parser:
 		self.current_token.token_type = "int"
 		while self.current_token  and  self.current_token.value !=";":
 			#self.match("int")
-			if self.current_token.value == "=":
-				
 			id_node = structures.Node(self.current_token.value, type='id', num_type= 'int', line_no= self.current_token.line_no)
 			root.add_child(id_node)
 			self.advance()
@@ -326,7 +324,7 @@ class Parser:
 	def parse(self):
 		ast = self.program()
 		if self.errors:
-			print(f"Se encontraron errores de sintaxis. La compilacion ha fallado.{self.errors}")
+			print(f"Se encontraron errores de sintaxis. La compilacion ha fallado.{self.errors} ")
 		else:
 			print("La sintaxis es correcta. La compilacion ha sido exitosa.")
 		return ast
@@ -388,6 +386,7 @@ class SemanticAnalyzer:
 		for child in node.children:
 
 			if child.type == "id":
+
 				if child.value == self.symbol_table[child.value]:
 					child.type = self.symbol_table[child.value]['type']
 					child.val = self.symbol_table[child.value]['value']
@@ -419,7 +418,7 @@ class SemanticAnalyzer:
 					"loc": self.loc,
 					"line_numbers": [var_node.line_no],
 				}
-			if 
+				
 	
 
 	def handle_float_declaration(self, node):
@@ -473,6 +472,7 @@ class SemanticAnalyzer:
 					self.symbol_table[variable_name]["value"] =int( node.children[0].val)
 				else:
 					self.symbol_table[variable_name]["value"] = node.children[0].val
+			self.symbol_table[variable_name]['line_numbers'].append( node.children[0].line_no)
                     
 
 
@@ -527,6 +527,7 @@ class SemanticAnalyzer:
 		# 	self.errors.append(f"Error en la línea {node.line_no}: asignacion incorrecta")
 		# 	return
 		if node.type == 'id':
+
 			if node.val is None  :
 				node.val = self.symbol_table[node.value]["value"]
 				return
@@ -584,6 +585,12 @@ class SemanticAnalyzer:
 			
 	
 	def calculate_increment_decrement(self, children, operation, node):
+		if children[0].type == 'id':
+			self.symbol_table[children[0].value]['line_numbers'].append(children[0].line_no)
+			
+		if children[1].type == 'id':
+			self.symbol_table[children[1].value]['line_numbers'].append(children[1].line_no)
+		
 		if children[0].num_type == 'float':
 			children[0].val = float(children[0].val)
 		elif children[0].num_type == 'int':
@@ -622,6 +629,12 @@ class SemanticAnalyzer:
 			return
 		
 	def calculate_bitwise(self, children, operation, node):
+		if children[0].type == 'id':
+			self.symbol_table[children[0].value]['line_numbers'].append(children[0].line_no)
+			
+		if children[1].type == 'id':
+			self.symbol_table[children[1].value]['line_numbers'].append(children[1].line_no)
+		
 		if children[0].num_type == 'float':
 			children[0].val = float(children[0].val)
 		elif children[0].num_type == 'int':
@@ -665,6 +678,12 @@ class SemanticAnalyzer:
 			return
 	
 	def calculate_shift(self, children, operation, node):
+		if children[0].type == 'id':
+			self.symbol_table[children[0].value]['line_numbers'].append(children[0].line_no)
+			
+		if children[1].type == 'id':
+			self.symbol_table[children[1].value]['line_numbers'].append(children[1].line_no)
+		
 		if children[0].num_type == 'float':
 			children[0].val = float(children[0].val)
 		elif children[0].num_type == 'int':
@@ -706,6 +725,12 @@ class SemanticAnalyzer:
 
 
 	def calculate_logic(self, children, operation, node):
+		if children[0].type == 'id':
+			self.symbol_table[children[0].value]['line_numbers'].append(children[0].line_no)
+			
+		if children[1].type == 'id':
+			self.symbol_table[children[1].value]['line_numbers'].append(children[1].line_no)
+		
 		if children[0].num_type == 'float':
 			children[0].val = float(children[0].val)
 		elif children[0].num_type == 'int':
@@ -743,6 +768,12 @@ class SemanticAnalyzer:
 			return
 	
 	def calculate_relational(self, children, operation, node):
+		if children[0].type == 'id':
+			self.symbol_table[children[0].value]['line_numbers'].append(children[0].line_no)
+			
+		if children[1].type == 'id':
+			self.symbol_table[children[1].value]['line_numbers'].append(children[1].line_no)
+		
 		if children[0].num_type == 'float':
 			children[0].val = float(children[0].val)
 		elif children[0].num_type == 'int':
@@ -787,10 +818,10 @@ class SemanticAnalyzer:
 		else:
 			self.errors.append(f"Error en la línea {node.line_no}: Operador relacional invalido")
 			return
-
+		
 
 			
-	
+
 
 	def calculate(self, children, operation, node):
 
@@ -803,7 +834,12 @@ class SemanticAnalyzer:
 		if children[0].num_type == 'int':
 			if children[1].val != None:
 				children[1].val = int(children[1].val)
+
+		if children[0].type == 'id':
+			self.symbol_table[children[0].value]['line_numbers'].append(children[0].line_no)
 			
+		if children[1].type == 'id':
+			self.symbol_table[children[1].value]['line_numbers'].append(children[1].line_no)
 		
 
 		
@@ -1013,7 +1049,7 @@ class SemanticProcessor:
 				value_str = f"{node.value} ( Linea {node.line_no})"
 				if hasattr(node, "type"):
 					
-					value_str += f" [Tipo: {node.type}]"
+					value_str += f" [Tipo: {node.num_type}]"
 
 				if hasattr(node, "val"):
 
