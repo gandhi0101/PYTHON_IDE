@@ -1,7 +1,10 @@
 import contextlib
 from io import StringIO
 import platform
-from PyQt5.QtWidgets import QMainWindow,QApplication, QVBoxLayout, QTableWidget,QTableWidgetItem,QHeaderView
+from tkinter import messagebox
+from PyQt5.QtWidgets import QMainWindow,QApplication, QVBoxLayout,  QLineEdit
+from IntermediateCode import Compiler
+from IntermediateCodeInterpreter import TMVirtualMachine
 from TreeViewSyntax import TreeViewSyntax
 from lexer import LexicalScaner
 import semantic
@@ -12,7 +15,7 @@ from code_execution import setup_editor
 from PyQt5.QtGui import QIcon
 import os
 from menu import MenuHandler
-from PyQt5 import QtMacExtras
+from PyQt5.QtCore import QProcess
 
 class PythonIDE(QMainWindow):
 	def __init__(self):
@@ -45,22 +48,46 @@ class PythonIDE(QMainWindow):
 		self.menu_handler = MenuHandler(self)
 		menubar = self.menuBar()
 	def run_code(self):
-		print('Running code')
-		# code = self.text_editor.toPlainText()
-		# output_stream = StringIO()
-		
-		# with contextlib.redirect_stdout(output_stream):
-		# 	try:
-		# 		exec(code)
-		# 	except Exception as e:
-		# 		print(e)
-
-		# output = output_stream.getvalue()
-		# self.text_results.setPlainText(output)
-		# # Seleccionar y mostrar la pestaña de resultados
-		# index = self.errors_widget.indexOf(self.results)
-		# self.errors_widget.setCurrentIndex(index)
-  
+		if(self.current_file==''):
+		#si ya esta abirto el archivo pero no se guardaron los cambios
+			try:
+				if self.parent.text_editor.document().isModified():
+				#preguntar por la ubicación para guardar
+					reply = self.menu_handler.confirm_save_changes()
+				if reply == messagebox.Cancel:
+					return
+				elif reply == messagebox.Yes:
+					self.menu_handler.save_file()
+				elif(self.current_file==''):
+					print('No hay un archivo abierto')
+					#abrir un documento
+					self.menu_handler.open_file()
+			except Exception:
+				print('Error al abrir el archivo')
+			except ValueError:
+				print('No hay un archivo abierto')
+				
+			
+		else:
+			try:
+				print('Running code')
+				self.run_lexical()
+				self.run_syntax()
+				self.run_semantic()
+				with open("src/assets/arbol_sintactico_anotado.txt", "r") as file:
+					syntax_tree_text = file.read()
+				compiler = Compiler(syntax_tree_text=syntax_tree_text)
+				compiler.compile()
+				
+				
+				
+			except Exception as e:
+				print(e)
+			except ValueError as e:
+				print(f'No hay un archivo abierto {e}')
+			self.output_middle_code()
+			self.output_terminal()
+	
 	def run_lexical(self):
 	 # Borrar contenido anterior
 		self.text_lexicalOutput.clear()
@@ -209,9 +236,57 @@ class PythonIDE(QMainWindow):
 		creear un instancia de la clase hashtable en el widget text_hashTabOutput ambos son QTableWidget
 		"""
 		HashTable.SymbolTableWidget(file_path="src/assets/tabla_simbolos.txt", table_widget=self.text_hashTabOutput)
-		
+	
 
-		
+	def output_middle_code(self):
+		# Clear the widget before displaying new results
+		self.text_intermediateCodeOutput.clear()
+
+		try:
+			with open("src/assets/codigo_intermedio.txt", "r") as file:
+				self.text_intermediateCodeOutput.setPlainText(file.read())
+				file.close()
+
+			index = self.errors_widget.indexOf(self.text_intermediateCodeOutput)
+			self.errors_widget.setCurrentIndex(index)
+		except Exception as e:
+			print(f"Error while displaying middle code: {e}")
+
+
+	def output_terminal(self):
+		"""
+		Abre una terminal externa ejecutando el comando deseado.
+		"""
+		self.terminal_process = QProcess(self)
+
+		working_dir = os.path.abspath(os.path.dirname(__file__))
+		# Detectar el sistema operativo y seleccionar la terminal
+		system = platform.system()
+		if system == "Windows":
+			shell = "cmd.exe"
+			args = ["/k", "python src/IntermediateCodeInterpreter.py"]
+		elif system == "Darwin":  # macOS
+			        # Usar AppleScript para abrir el Terminal y ejecutar el comando
+			shell = "osascript"
+			args = [
+				"-e",
+				f"""tell application "Terminal" 
+					do script "cd {working_dir} && python IntermediateCodeInterpreter.py"
+                	activate
+            	end tell
+				"""
+			]
+		elif system == "Linux":
+			shell = "x-terminal-emulator"  # Cambia a tu emulador preferido como gnome-terminal o xterm
+			args = ["-e", "python IntermediateCodeInterpreter.py"]
+		else:
+			raise RuntimeError(f"Sistema operativo no soportado: {system}")
+
+		# Iniciar la terminal externa con el comando configurado
+		self.terminal_process.start(shell, args)
+
+		print(f"Terminal externa abierta usando {shell} en {system}")
+	
 	def update_line_column_info(self):
 		current_line = self.text_editor.textCursor().blockNumber() + 1
 		current_column = self.text_editor.textCursor().positionInBlock() + 1

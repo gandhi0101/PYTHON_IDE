@@ -10,6 +10,10 @@ class Node:
             self.siblings = []
 
         def add_child(self, child):
+            if child.num_type == '(':
+                if child.type == 'id': 
+                    child.num_type = 'num'
+            
             child.parent = self
             self.children.append(child)
             if len(self.children) > 1:

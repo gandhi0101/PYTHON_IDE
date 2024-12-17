@@ -64,10 +64,10 @@ class Parser:
 			"cout",
 		]:
 			root.add_child(self.stmt())
-		while self.current_token and self.current_token.token_type != "}" and self.current_token.token_type != "end":
+		while self.current_token and self.current_token.token_type != "}":
 			if self.current_token.token_type == "do":
 				root.add_child(self.do_while_stmt())
-			elif  self.current_token.value == "end" or self.current_token.token_type == "else":
+			elif  self.current_token.value == "}" or self.current_token.token_type == "else":
 				return root
 			else:
 				root.add_child(self.stmt())
@@ -77,9 +77,9 @@ class Parser:
 		root = Node("SentenciaDo")
 		self.match("do")
 		root.add_child(self.stmt())  # Agregar la primera expresion dentro del do-while
-		while self.current_token and self.current_token.token_type != "until":
+		while self.current_token and self.current_token.token_type != "while":
 			root.add_child(self.stmt())  # Agregar mas expresiones dentro del do-while
-		self.match("until")
+		self.match("while")
 		self.match("(")
 		root.add_child(self.expr())
 		self.match(")")
@@ -146,22 +146,22 @@ class Parser:
 				expr_node = self.expr()
 				root.add_child(expr_node)
 				self.match(")")
-
+			
 			stmt_node = self.stmts()
-
 			if self.current_token and self.current_token.token_type == "{":
 				self.match("{")
 				root.add_child(stmt_node)
 				self.match("}")
+
 			else:
 				root.add_child(stmt_node)
-
 			if self.current_token and self.current_token.token_type == "else":
 				self.match("else")
+				self.match("{")
 				else_stmt_node = self.stmts()
 				root.add_child(else_stmt_node)
-
-			self.match("end")
+				self.match("}")
+			
 
 		elif self.current_token and self.current_token.token_type == "while":
 			root = Node("SentenciaWhile")

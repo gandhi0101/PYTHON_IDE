@@ -25,7 +25,7 @@ def setup_bottom_widget(ide):
 	add_error_tab(ide, 'Errores Lexicos', QTextEdit(ide), 'text_lexicalErrors')
 	add_error_tab(ide, 'Errores Sintacticos', QTextEdit(ide), 'text_syntaxErrors')
 	add_error_tab(ide, 'Errores Semanticos', QTextEdit(ide), 'text_semanticErrors')
-	add_error_tab(ide, 'Resultados', QTextEdit(ide), 'text_results')
+	add_error_tab(ide, 'Resultados', QTextEdit(ide), 'text_results', False)#esta no es de errores pero aqui se
 
 	layout_errors.addWidget(ide.errors_widget)
 
@@ -38,9 +38,9 @@ def add_tab(ide, tab_widget, title, widget, attr_name):
 	container.setLayout(layout)
 	tab_widget.addTab(container, title)
 
-def add_error_tab(ide, title, widget, attr_name):
+def add_error_tab(ide, title, widget, attr_name, RO =True):
 	setattr(ide, attr_name, widget)
-	widget.setReadOnly(True)
+	widget.setReadOnly(RO)
 	layout = QVBoxLayout()
 	layout.addWidget(widget)
 	container = QWidget(ide)

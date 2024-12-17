@@ -33,11 +33,11 @@ class Parser:
 		if self.current_token and self.current_token.token_type == token_type:
 			self.advance()
 		else:
-			expected_token = token_type if token_type else "end of input"
+			expected_token = token_type if token_type else "} of input"
 			found_token = (
 				self.current_token.token_type
 				if self.current_token
-				else "end of input"
+				else "} of input"
 			)
 			self.errors.append(
 				f"Expected {expected_token}, found {found_token}"
@@ -66,10 +66,10 @@ class Parser:
 			]:
 
 			root.add_child(self.stmt())
-		while self.current_token and self.current_token.token_type != "}" and self.current_token.token_type != "end":
+		while self.current_token and self.current_token.token_type != "}" and self.current_token.token_type != "}":
 			if self.current_token.token_type == "do":
 				root.add_child(self.do_while_stmt())
-			elif self.current_token.value == "end" or self.current_token.token_type == "else":
+			elif self.current_token.value == "}" or self.current_token.token_type == "else":
 				return root
 			else:
 				root.add_child(self.stmt())
@@ -310,6 +310,12 @@ class Parser:
 			   num_type= self.current_token.num_type
 			   ) 
 			self.match(self.current_token.token_type)
+			#el problema es que se le asigna a self.current_token.token_type el parentecis 
+			#validar si es un entero o un flotante y cambiarlo
+			#recorre el root para arriba (y los lados) y verifica si hay una definicion de este valor
+
+
+			#self.advance()
 
 		else:
 			if self.current_token is not None:
@@ -324,6 +330,7 @@ class Parser:
 	def parse(self):
 		ast = self.program()
 		if self.errors:
+			# print(f"Se encontraron errores de sintaxis. La compilacion ha fallado.{self.errors} ")
 			print(f"Se encontraron errores de sintaxis. La compilacion ha fallado.{self.errors} ")
 		else:
 			print("La sintaxis es correcta. La compilacion ha sido exitosa.")
@@ -473,7 +480,7 @@ class SemanticAnalyzer:
 				else:
 					self.symbol_table[variable_name]["value"] = node.children[0].val
 			self.symbol_table[variable_name]['line_numbers'].append( node.children[0].line_no)
-                    
+					
 
 
 	def evaluate_expression(self, node):

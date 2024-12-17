@@ -1,13 +1,3 @@
-Sentencia invalida: 45
-Sentencia invalida: ;
-Se esperaba end, se encontro }
-Sentencia invalida: ;
-Sentencia invalida: }
-Se esperaba until, se encontro fin de entrada
-Se esperaba (, se encontro fin de entrada
-Factor invalido: None
-Se esperaba ), se encontro fin de entrada
-Se esperaba ;, se encontro fin de entrada
-Se esperaba }, se encontro fin de entrada
-Se esperaba end, se encontro fin de entrada
-Se esperaba }, se encontro fin de entrada
+Se esperaba =, se encontro %
+Se esperaba ;, se encontro {
+Se esperaba }, se encontro else

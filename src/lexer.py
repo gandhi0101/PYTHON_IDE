@@ -49,6 +49,10 @@ class LexicalScaner:
 		"*": "MULTIPLICACION",
 		"/": "DIVISION",
 		"=": "IGUALACION",
+		"%": "MODULO",
+        "^": "POTENCIA",
+        "++": "INCREMENTO",
+        "--": "DECREMENTO",
 	}
 	operadores_relacionales = {
 		"==": "IGUALDAD",
